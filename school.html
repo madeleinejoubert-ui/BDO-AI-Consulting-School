@@ -6,28 +6,28 @@
 <title>The Augmentation Line — Consulting + Responsible AI Training</title>
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
-<link href="https://fonts.googleapis.com/css2?family=Archivo:wght@500;600;700;800&family=Newsreader:ital,opsz,wght@0,6..72,400;0,6..72,500;0,6..72,600;1,6..72,400&family=IBM+Plex+Mono:wght@400;500;600&display=swap" rel="stylesheet">
+<link href="https://fonts.googleapis.com/css2?family=Montserrat:wght@400;500;600;700;800&family=Archivo:wght@500;600;700;800&family=Newsreader:ital,opsz,wght@0,6..72,400;0,6..72,500;0,6..72,600;1,6..72,400&family=IBM+Plex+Mono:wght@400;500;600&display=swap" rel="stylesheet">
 <style>
   :root{
-    --ink:#1b1a2e;
-    --ink-2:#3a3852;
-    --paper:#f7f8fc;
-    --paper-2:#ecedf6;
+    --ink:#1d1d1b;
+    --ink-2:#42423f;
+    --paper:#ffffff;
+    --paper-2:#f4f4f7;
     --card:#ffffff;
-    --ai:#2f6bff;          /* machine / augmentation — BLUE (not a traffic-light colour) */
-    --ai-soft:#e1eaff;
-    --ai-line:#a9c2ff;
+    --ai:#22409A;          /* machine / augmentation — BLUE (not a traffic-light colour) */
+    --ai-soft:#e4e8f6;
+    --ai-line:#b3bce0;
     --human:#ef8a17;       /* judgment / stays human — AMBER = caution */
     --human-soft:#ffe9cf;
     --human-line:#ffc684;
-    --gate:#e23744;        /* mandatory human sign-off — RED = stop */
-    --gate-soft:#ffe0e2;
-    --pop:#7c4dff;         /* decorative violet — carries NO meaning, accents only */
-    --line:#e6e4f1;
-    --line-2:#d3cfe6;
-    --muted:#67637e;
-    --display:'Archivo',system-ui,sans-serif;
-    --body:'Newsreader',Georgia,serif;
+    --gate:#E81A3B;        /* mandatory human sign-off — RED = stop */
+    --gate-soft:#fde6ea;
+    --pop:#E81A3B;         /* decorative violet — carries NO meaning, accents only */
+    --line:#e5e5ea;
+    --line-2:#d4d4dc;
+    --muted:#6c6c75;
+    --display:'Montserrat','Trebuchet MS',system-ui,sans-serif;
+    --body:'Montserrat','Trebuchet MS',system-ui,sans-serif;
     --mono:'IBM Plex Mono',ui-monospace,monospace;
     --maxw:1160px;
   }
@@ -52,7 +52,7 @@
   .topbar .wrap{display:flex;align-items:center;justify-content:space-between;height:58px}
   .brandmark{display:flex;align-items:center;gap:11px;font-family:var(--display);font-weight:700;letter-spacing:-.01em;font-size:15px}
   .brandmark .dot{width:26px;height:26px;border-radius:50%;background:
-     conic-gradient(from 130deg,#2f6bff,#7c4dff,#ef8a17,#e23744,#2f6bff);
+     conic-gradient(from 130deg,#E81A3B 0 50%,#22409A 50% 100%);
      box-shadow:inset 0 0 0 4px var(--paper),inset 0 0 0 5px var(--line-2)}
   .menubtn{display:none;border:1px solid var(--line-2);background:var(--card);color:var(--ink);
      font-family:var(--display);font-weight:600;font-size:13px;padding:7px 12px;border-radius:7px;cursor:pointer}
@@ -68,7 +68,7 @@
   .hero .eyebrow{font-size:12.5px;font-weight:700;letter-spacing:.16em;text-transform:uppercase;color:var(--ai);margin:0 0 18px}
   .hero h1{font-family:var(--display);font-weight:800;letter-spacing:-.025em;line-height:1.02;
      font-size:clamp(2.5rem,7vw,4.7rem);margin:0 0 18px;max-width:18ch}
-  .hero h1 .amp{background:linear-gradient(96deg,#2f6bff,#7c4dff,#e23744);
+  .hero h1 .amp{background:linear-gradient(96deg,#E81A3B,#22409A);
      -webkit-background-clip:text;background-clip:text;color:transparent;-webkit-text-fill-color:transparent}
   .hero .lede{font-size:clamp(1.05rem,2.4vw,1.34rem);max-width:60ch;color:var(--ink-2);margin:0 0 30px}
   .hero .meta{display:flex;flex-wrap:wrap;gap:10px}
@@ -321,7 +321,7 @@
   }
   /* ---------- drill-down navigator ---------- */
   .augstage{cursor:pointer;transition:transform .12s,box-shadow .12s;border-radius:12px}
-  .augstage:hover{box-shadow:0 0 0 2px var(--pop-soft, #efe7ff)}
+  .augstage:hover{box-shadow:0 0 0 2px var(--pop-soft, #fde6ea)}
   .augstage:focus-visible{outline:2px solid var(--pop);outline-offset:2px}
   .augstage.open{box-shadow:0 0 0 2px var(--pop)}
   .augtitle .taphint{color:var(--pop);font-weight:700}
