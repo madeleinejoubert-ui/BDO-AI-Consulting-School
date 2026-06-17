@@ -1,0 +1,381 @@
+<!DOCTYPE html>
+<html lang="en-GB">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Problem Diagnostic — describe it, get the method combination</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Archivo:wght@500;600;700;800&family=Newsreader:ital,opsz,wght@0,6..72,400;0,6..72,500;0,6..72,600;1,6..72,400&family=IBM+Plex+Mono:wght@400;500;600&display=swap" rel="stylesheet">
+<style>
+  :root{
+    --ink:#1b1a2e; --ink-2:#3a3852;
+    --paper:#f7f8fc; --paper-2:#ecedf6; --card:#ffffff;
+    --ai:#2f6bff; --ai-soft:#e1eaff; --ai-line:#a9c2ff; --ai-ink:#1a48b8;
+    --human:#ef8a17; --human-soft:#ffe9cf; --human-line:#ffc684; --human-ink:#9a4e0d;
+    --gate:#e23744; --gate-soft:#ffe0e2; --gate-line:#f3aeb4;
+    --pop:#7c4dff; --pop-soft:#efe7ff; --teal:#12b3a6; --green:#1f9d57;
+    --line:#e6e4f1; --line-2:#d3cfe6; --muted:#67637e;
+    --display:'Archivo',system-ui,sans-serif; --body:'Newsreader',Georgia,serif; --mono:'IBM Plex Mono',ui-monospace,monospace;
+    --rainbow:linear-gradient(90deg,#7c4dff,#2f6bff,#12b3a6,#ef8a17,#e23744);
+  }
+  *{box-sizing:border-box}
+  html{scroll-behavior:smooth}
+  body{margin:0;font-family:var(--body);background:var(--paper);color:var(--ink);font-size:16px;line-height:1.5;-webkit-font-smoothing:antialiased}
+  h1,h2,h3,h4,.lbl,.eyebrow,button,.qopt,.tag,input,select,textarea,.mchip,.badge{font-family:var(--display)}
+  button{cursor:pointer}
+  textarea,input[type=text]{font-family:var(--mono)}
+
+  .topbar{position:sticky;top:0;z-index:60;background:rgba(247,248,252,.9);backdrop-filter:blur(8px);border-bottom:1px solid var(--line)}
+  .topbar .wrap{max-width:1080px;margin:0 auto;padding:11px 20px;display:flex;align-items:center;gap:14px;flex-wrap:wrap}
+  .brand{display:flex;align-items:center;gap:11px;font-weight:800;font-size:15px;letter-spacing:-.01em}
+  .brand .dot{width:24px;height:24px;border-radius:50%;background:conic-gradient(from 130deg,#7c4dff,#2f6bff,#12b3a6,#ef8a17,#e23744,#7c4dff);box-shadow:inset 0 0 0 4px var(--paper),inset 0 0 0 5px var(--line-2)}
+  .brand small{display:block;font-weight:600;font-size:10px;letter-spacing:.16em;color:var(--muted);text-transform:uppercase}
+  .topbar .tools{margin-left:auto;display:flex;gap:7px;flex-wrap:wrap}
+  .btn{border:1px solid var(--line-2);background:var(--card);color:var(--ink);font-weight:600;font-size:12.5px;padding:7px 12px;border-radius:8px;display:inline-flex;align-items:center;gap:6px;text-decoration:none}
+  .btn:hover{background:var(--paper-2)}.btn.ghost{border-color:transparent;background:transparent;color:var(--muted)}
+  .btn.solid{background:var(--pop);border-color:var(--pop);color:#fff}.btn.solid:hover{filter:brightness(1.06)}
+
+  .wrap-main{max-width:1080px;margin:0 auto;padding:26px 20px 40px}
+  .hero h1{font-weight:800;letter-spacing:-.02em;font-size:clamp(1.7rem,3.8vw,2.4rem);line-height:1.04;margin:0 0 8px}
+  .hero h1 .g{background:var(--rainbow);-webkit-background-clip:text;background-clip:text;color:transparent;-webkit-text-fill-color:transparent}
+  .hero p{max-width:70ch;color:var(--ink-2);margin:0 0 6px}
+
+  .panel{background:var(--card);border:1px solid var(--line);border-radius:16px;padding:20px;margin:20px 0}
+  .panel.ai{border-color:var(--ai-line);background:linear-gradient(180deg,var(--ai-soft),var(--card) 55%)}
+  .lbl{font-weight:700;font-size:12.5px;letter-spacing:.02em;text-transform:uppercase;margin:0 0 8px;display:flex;align-items:center;gap:9px}
+  .req{font-size:9px;font-weight:700;letter-spacing:.05em;color:#fff;background:var(--pop);padding:2px 6px;border-radius:5px}
+  .opt{font-size:9px;font-weight:700;letter-spacing:.05em;color:var(--muted);border:1px solid var(--line-2);padding:2px 6px;border-radius:5px}
+  .hint{font-family:var(--body);font-size:13.5px;color:var(--muted);margin:0 0 12px}
+  textarea,input[type=text]{width:100%;border:1px solid var(--line-2);border-radius:10px;padding:12px 13px;font-size:13.5px;line-height:1.55;color:var(--ink);background:var(--paper);resize:vertical}
+  textarea:focus,input:focus{outline:2px solid var(--pop);outline-offset:1px;border-color:transparent}
+  textarea.big{min-height:140px}
+
+  .qgrid{display:grid;grid-template-columns:1fr 1fr;gap:18px;margin-top:6px}
+  .qgroup .lbl{margin-bottom:9px}
+  .qopts{display:flex;flex-wrap:wrap;gap:8px}
+  .qopt{background:var(--paper-2);border:1px solid var(--line-2);border-radius:999px;padding:8px 13px;font-size:12.5px;font-weight:600;color:var(--ink-2)}
+  .qopt:hover{border-color:var(--pop);color:var(--ink)}
+  .qopt.sel{background:var(--pop);border-color:var(--pop);color:#fff}
+
+  .analyserow{display:flex;align-items:center;gap:14px;flex-wrap:wrap;margin-top:8px}
+  .analyse{background:var(--ai);border:1px solid var(--ai);color:#fff;font-weight:800;font-size:15px;padding:13px 22px;border-radius:11px;display:inline-flex;align-items:center;gap:9px}
+  .analyse:hover{filter:brightness(1.07)}.analyse:disabled{opacity:.6;cursor:wait}
+  .analyse.busy .spark{animation:spin 1s linear infinite;display:inline-block}
+  @keyframes spin{to{transform:rotate(360deg)}}
+
+  /* ---- results ---- */
+  #results{display:none}
+  .resbanner{border-radius:16px;padding:20px;color:#fff;margin:0 0 18px;background:var(--pop)}
+  .resbanner .dlabel{font-family:var(--mono);font-size:11px;letter-spacing:.12em;text-transform:uppercase;opacity:.85;margin:0 0 5px}
+  .resbanner h2{margin:0 0 6px;font-size:clamp(1.3rem,3vw,1.8rem);font-weight:800;letter-spacing:-.02em}
+  .resbanner .arch{font-family:var(--mono);font-size:12px;opacity:.92;margin:0 0 9px}
+  .resbanner p{margin:0;font-size:15px;max-width:78ch;opacity:.97;font-family:var(--body)}
+  .dom-Clear{background:linear-gradient(120deg,#12b3a6,#0e8f86)}
+  .dom-Complicated{background:linear-gradient(120deg,#2f6bff,#1a48b8)}
+  .dom-Complex{background:linear-gradient(120deg,#7c4dff,#5a2fb0)}
+  .dom-Chaotic{background:linear-gradient(120deg,#e23744,#a8061f)}
+
+  .combo{display:flex;flex-direction:column;gap:14px}
+  .comboblock .lbl .sub{font-weight:600;color:var(--muted);text-transform:none;letter-spacing:0;font-size:11.5px;margin-left:4px}
+  .mchips{display:flex;flex-wrap:wrap;gap:9px;margin-top:2px}
+  .mchip{display:inline-flex;align-items:center;gap:6px;border-radius:10px;padding:9px 14px;font-weight:700;font-size:13.5px;text-decoration:none;border:1px solid var(--pop);color:var(--pop);background:var(--pop-soft)}
+  .mchip:hover{background:var(--pop);color:#fff}
+  .mchip.sup{border-color:var(--line-2);color:var(--ink-2);background:var(--paper-2);font-size:12.5px;font-weight:600}
+  .mchip.sup:hover{border-color:var(--pop);color:var(--pop);background:var(--pop-soft)}
+  .mchip .ext{font-size:11px;opacity:.7}
+
+  .lifecycle{display:grid;grid-template-columns:repeat(5,1fr);gap:10px;margin-top:6px}
+  .lc{border:1px solid var(--line);border-radius:12px;padding:12px;background:var(--card);position:relative}
+  .lc .ph{font-family:var(--display);font-weight:800;font-size:11px;letter-spacing:.05em;text-transform:uppercase;color:var(--muted);margin:0 0 7px}
+  .lc .m{font-family:var(--display);font-weight:700;font-size:13.5px;margin:0 0 5px;color:var(--pop)}
+  .lc .f{font-family:var(--body);font-size:13px;line-height:1.4;color:var(--ink-2);margin:0}
+  .lc.start{border-color:var(--pop);box-shadow:0 0 0 2px var(--pop) inset}
+  .lc .startflag{position:absolute;top:-9px;left:10px;font-family:var(--display);font-size:9px;font-weight:700;letter-spacing:.05em;color:#fff;background:var(--pop);padding:2px 7px;border-radius:5px}
+
+  .twopane{display:grid;grid-template-columns:1fr 1fr;gap:16px}
+  .gatebox{border:1px solid var(--gate-line);background:var(--gate-soft);border-radius:14px;padding:16px}
+  .gatebox .gi{display:inline-flex;align-items:center;gap:8px;font-family:var(--display);font-weight:800;font-size:14px;color:var(--gate);margin:0 0 7px}
+  .gibadge{font-size:10px;letter-spacing:.05em;color:#fff;background:var(--gate);padding:3px 8px;border-radius:6px}
+  .gibadge.Light{background:var(--human)}.gibadge.Standard{background:#c2691f}.gibadge.Hard{background:var(--gate)}
+  .gatebox p,.humanbox p{font-family:var(--body);font-size:14px;line-height:1.5;color:var(--ink-2);margin:0}
+  .humanbox{border:1px solid var(--human-line);background:var(--human-soft);border-radius:14px;padding:16px}
+  .humanbox .hi{display:inline-flex;align-items:center;gap:8px;font-family:var(--display);font-weight:800;font-size:14px;color:var(--human-ink);margin:0 0 7px}
+
+  .modal{position:fixed;inset:0;background:rgba(20,20,40,.5);z-index:100;display:none;align-items:center;justify-content:center;padding:20px}
+  .modal.show{display:flex}
+  .modalcard{background:var(--card);border-radius:16px;max-width:640px;width:100%;padding:22px;max-height:86vh;overflow:auto;border:1px solid var(--line)}
+  .modalcard h3{margin:0 0 6px;font-size:18px}.modalcard p{font-size:14px;color:var(--ink-2);margin:0 0 12px}
+  .modalcard pre{background:#11131c;color:#e8eef0;border-radius:10px;padding:14px;font-family:var(--mono);font-size:12px;line-height:1.5;white-space:pre-wrap;word-break:break-word;max-height:40vh;overflow:auto}
+  .modalrow{display:flex;gap:8px;justify-content:flex-end;margin-top:14px;flex-wrap:wrap}
+  .row{display:flex;gap:8px;align-items:center;flex-wrap:wrap}
+  .toast{position:fixed;left:50%;bottom:24px;transform:translateX(-50%) translateY(20px);background:var(--ink);color:#fff;padding:11px 18px;border-radius:10px;font-family:var(--display);font-weight:600;font-size:13px;opacity:0;transition:.25s;z-index:120;pointer-events:none}
+  .toast.show{opacity:1;transform:translateX(-50%) translateY(0)}
+  .footer{max-width:1080px;margin:0 auto;padding:18px 20px 40px;color:var(--muted);font-family:var(--mono);font-size:11.5px;border-top:1px solid var(--line)}
+
+  @media (max-width:820px){ .qgrid,.twopane{grid-template-columns:1fr} .lifecycle{grid-template-columns:1fr} }
+  @media (prefers-reduced-motion:reduce){*{animation-duration:.001ms!important;transition-duration:.001ms!important}}
+  @media print{.topbar,.analyserow,#intake .lbl .req,.modal,.toast,.btn{display:none!important}}
+  /* ---------- document upload ---------- */
+  .docwrap{margin-top:16px;border-top:1px dashed var(--line-2);padding-top:14px}
+  .docwrap .or{font-family:var(--display);font-size:11px;font-weight:700;letter-spacing:.08em;text-transform:uppercase;color:var(--muted);margin:0 0 10px;text-align:center}
+  .dz{border:1.5px dashed var(--ai-line);border-radius:12px;padding:18px;text-align:center;background:rgba(225,234,255,.45);cursor:pointer;transition:.15s}
+  .dz:hover,.dz.over{border-color:var(--pop);background:var(--pop-soft)}
+  .dz.dzbusy{opacity:.6;pointer-events:none}
+  .dz .big2{font-family:var(--display);font-weight:700;font-size:14px;color:var(--ink);margin:0 0 3px}
+  .dz .sm2{font-family:var(--mono);font-size:11px;color:var(--muted);margin:0}
+  .caution{display:flex;gap:8px;align-items:flex-start;margin:10px 0 0;font-family:var(--body);font-size:12.5px;color:var(--human-ink);background:var(--human-soft);border:1px solid var(--human-line);border-radius:9px;padding:9px 11px;line-height:1.45}
+  .docbox{margin-top:14px;border:1px solid var(--line);border-radius:12px;background:var(--card);padding:12px}
+  .docbox .dhd{display:flex;align-items:center;gap:8px;margin:0 0 8px;font-family:var(--display);font-size:12px;font-weight:700}
+  .docbox .dhd .fn{color:var(--pop)} .docbox .dhd .cc{margin-left:auto;font-family:var(--mono);font-size:10.5px;color:var(--muted);font-weight:400}
+  .docbox .dhd .rm{border:none;background:transparent;color:var(--muted);cursor:pointer;font-size:14px} .docbox .dhd .rm:hover{color:var(--gate)}
+  .docbox textarea{min-height:120px}
+</style>
+</head>
+<body>
+
+<div class="topbar">
+  <div class="wrap">
+    <div class="brand"><span class="dot"></span><span>Problem Diagnostic<small>Describe it · get the method combination</small></span></div>
+    <div class="tools">
+      <button class="btn" id="printBtn">⎙ Export</button>
+      <button class="btn ghost" id="resetBtn">Reset</button>
+    </div>
+  </div>
+</div>
+
+<div class="wrap-main">
+  <div class="hero">
+    <h1>Don't pick a framework. <span class="g">Describe the problem.</span></h1>
+    <p>Tell it what you're facing and a little about the engagement. It reads the problem, classifies it, and
+       recommends one methodology — or a sequenced combination — across the engagement, marking where AI accelerates,
+       where your judgement holds, and the one decision that needs a human signature. The frameworks are the easy part;
+       knowing which to reach for is the craft.</p>
+  </div>
+
+  <!-- INTAKE -->
+  <div id="intake">
+    <div class="panel ai">
+      <p class="lbl"><span class="req">START HERE</span> The problem, in your own words</p>
+      <p class="hint">Forget frameworks. Just describe what's actually going on — the messier and more honest, the better the read.</p>
+      <textarea class="big" id="q_problem" placeholder="e.g. An existing client's transformation has stalled. The analysis was sound and the board agreed it, but six months on nothing has changed on the ground and people are quietly working around the new process…"></textarea>
+
+      <div class="docwrap">
+        <p class="or">— or add the client's own document —</p>
+        <div class="dz" id="dz">
+          <input type="file" id="fileDoc" accept=".txt,.pdf,.docx" hidden>
+          <p class="big2" id="dzmsg">Drop an RFP, scoping email or pricing request here</p>
+          <p class="sm2">or click to choose · PDF, Word (.docx) or text · born-digital, not scanned</p>
+        </div>
+        <p class="caution">⚠ Client documents may carry names, commercials or confidential detail. Extracted text stays in your browser and is only sent on when you press Analyse — handle it per your data policy (treat as Amber/Red).</p>
+        <div id="docHost"></div>
+      </div>
+    </div>
+
+    <div class="panel">
+      <p class="lbl">A little about the engagement <span class="hint" style="margin:0;font-weight:400;text-transform:none;letter-spacing:0">— context changes how the methods sequence, not just which ones</span></p>
+      <div class="qgrid" id="qgrid"></div>
+    </div>
+
+    <div class="analyserow">
+      <button class="analyse" id="analyseBtn"><span class="spark">✦</span> Analyse the problem</button>
+      <span class="hint" style="margin:0">The problem description is enough to start; the context sharpens the fit.</span>
+    </div>
+  </div>
+
+  <!-- RESULTS -->
+  <div id="results"></div>
+</div>
+
+<div class="footer"><span>Original synthesis &amp; method curation © its author · methodologies referenced are their owners'. A diagnostic aid, not a substitute for professional judgement.</span></div>
+
+<div class="modal" id="modal">
+  <div class="modalcard">
+    <h3>Run this with your AI assistant</h3>
+    <p>The live assistant isn't reachable from here — two quick steps and the recommendation drops straight in.</p>
+    <p class="lbl" style="margin:2px 0 7px">1 · Copy this prompt</p>
+    <pre id="mPrompt"></pre>
+    <div class="row" style="margin-top:10px"><button class="btn" id="mCopy">Copy prompt</button>
+      <a class="btn ghost" href="https://claude.ai/new" target="_blank" rel="noopener">Open Claude ↗</a></div>
+    <p class="lbl" style="margin:16px 0 7px">2 · Paste the result back</p>
+    <textarea id="mResult" placeholder="Paste exactly what the assistant gave you here…" style="min-height:130px"></textarea>
+    <div class="modalrow"><button class="btn ghost" id="mClose">Cancel</button><button class="btn solid" id="mApply">Show recommendation</button></div>
+  </div>
+</div>
+<div class="toast" id="toast"></div>
+
+<script>
+"use strict";
+/* ===== state ===== */
+var BLANK={problem:"",docText:"",docName:"",stage:"",relationship:"",done:"",stakes:"",stakeholders:"",evidence:"",sector:"",result:null};
+var S=load()||JSON.parse(JSON.stringify(BLANK));
+function persist(){ try{ localStorage.setItem("cdiag",JSON.stringify(S)); }catch(e){} }
+function load(){ try{ var r=localStorage.getItem("cdiag"); return r?JSON.parse(r):null; }catch(e){ return null; } }
+
+var GROUPS=[
+  {k:"stage",label:"Stage of engagement",req:true,opts:["Pursuit / proposal","Scoping & diagnosis","Mid-delivery","Closing & handover"]},
+  {k:"relationship",label:"The client",req:true,opts:["New client","Existing client"]},
+  {k:"done",label:"What “done” looks like",req:true,opts:["A decision","A roadmap","A cost / efficiency result","A new product or service","Adoption & change"]},
+  {k:"stakes",label:"Stakes & reversibility",req:true,opts:["High & hard to reverse","Moderate","Low & reversible"]},
+  {k:"stakeholders",label:"Stakeholders",req:false,opts:["Single sponsor","Multiple parties / partners"]},
+  {k:"evidence",label:"Evidence base",req:false,opts:["Rich data","Patchy / qualitative","Little or none"]},
+  {k:"sector",label:"Context",req:false,opts:["Regulated (e.g. FS)","Not regulated"]}
+];
+var METHODS_LIST="Design Thinking, Lean Startup, Jobs to be Done, Blue Ocean Strategy, TRIZ, Hypothesis-Driven Problem Solving, Cynefin, Scenario Planning, Wardley Mapping, Root Cause Analysis, Pyramid Principle, Systems Thinking, Theory of Constraints, Appreciative Inquiry, Complex Adaptive Systems, Stakeholder Mapping & Change (ADKAR / Kotter), Agile / Scrum / Kanban, Design for Six Sigma, Open Innovation";
+var ANCHORS=[
+  {id:"m1",kw:["design thinking"]},{id:"m2",kw:["lean startup"]},{id:"m3",kw:["jobs to be done","jtbd"]},
+  {id:"m4",kw:["blue ocean"]},{id:"m5",kw:["triz"]},{id:"m6",kw:["hypothesis"]},{id:"m7",kw:["cynefin"]},
+  {id:"m8",kw:["scenario"]},{id:"m9",kw:["wardley"]},{id:"mRCA",kw:["root cause","5 whys","fishbone","rca"]},
+  {id:"mPyr",kw:["pyramid","scqa","minto"]},{id:"m10",kw:["systems thinking"]},{id:"m11",kw:["theory of constraints","constraint","toc"]},
+  {id:"m12",kw:["appreciative"]},{id:"m13",kw:["complex adaptive","cas"]},{id:"mChg",kw:["stakeholder","change","adkar","kotter"]},
+  {id:"m14",kw:["agile","scrum","kanban"]},{id:"m15",kw:["six sigma","dfss","dmadv"]},{id:"m16",kw:["open innovation"]}
+];
+function anchorFor(name){ var n=(name||"").toLowerCase(); for(var i=0;i<ANCHORS.length;i++){ if(ANCHORS[i].kw.some(function(k){return n.indexOf(k)>=0;})) return ANCHORS[i].id; } return null; }
+
+/* ===== AI core (shared) ===== */
+async function askClaude(prompt){
+  var res=await fetch("https://api.anthropic.com/v1/messages",{method:"POST",headers:{"Content-Type":"application/json"},
+    body:JSON.stringify({model:"claude-sonnet-4-6",max_tokens:1400,messages:[{role:"user",content:prompt}]})});
+  if(!res.ok) throw new Error("status "+res.status);
+  var data=await res.json(); var text=(data.content||[]).filter(function(b){return b.type==="text";}).map(function(b){return b.text;}).join("\n").trim();
+  if(!text) throw new Error("empty"); var clean=text.replace(/```json/gi,"").replace(/```/g,"").trim(); var m=clean.match(/[\[{][\s\S]*[\]}]/); return JSON.parse(m?m[0]:clean);
+}
+function buildPrompt(){
+  var ctx=GROUPS.map(function(g){ return g.label+": "+(S[g.k]||"(not specified)"); }).join("\n");
+  return "You are a senior management consultant choosing the right problem-solving methodology (or combination) for an engagement. "
+    +"Recommend ONLY from this library: "+METHODS_LIST+".\n\n"
+    +"PROBLEM (client's words / consultant framing):\n"+(S.problem||"(see client document below)")
+    +(S.docText?"\n\nCLIENT DOCUMENT (extracted text — an RFP, scoping email or pricing request; may be noisy):\n"+S.docText:"")
+    +"\n\nENGAGEMENT CONTEXT:\n"+ctx+"\n\n"
+    +"Classify the problem with Cynefin. Choose 1-2 primary methods and 2-4 supporting ones. Sequence them across the engagement "
+    +"lifecycle (Prepare, Structure, Analyse, Synthesise, Deliver). Use the stage of engagement to set where work should START, and "
+    +"the stakes to set gate intensity (Light / Standard / Hard). Add a human-landing note: the irreducibly human work of bringing "
+    +"people through the change, protecting their learning and wellbeing — the part no AI can do.\n\n"
+    +"Return ONLY JSON: {\"domain\":\"Clear|Complicated|Complex|Chaotic\",\"domainWhy\":\"one sentence\",\"archetype\":\"short label\","
+    +"\"primary\":[],\"supporting\":[],\"startAt\":\"Prepare|Structure|Analyse|Synthesise|Deliver\","
+    +"\"lifecycle\":[{\"phase\":\"Prepare\",\"method\":\"\",\"focus\":\"\"},{\"phase\":\"Structure\",\"method\":\"\",\"focus\":\"\"},{\"phase\":\"Analyse\",\"method\":\"\",\"focus\":\"\"},{\"phase\":\"Synthesise\",\"method\":\"\",\"focus\":\"\"},{\"phase\":\"Deliver\",\"method\":\"\",\"focus\":\"\"}],"
+    +"\"gate\":\"Light|Standard|Hard\",\"gateWhy\":\"one sentence\",\"humanLanding\":\"2-3 sentences\",\"why\":\"2-3 sentences\"}";
+}
+async function analyse(btn){
+  if(!S.problem.trim() && !(S.docText && S.docText.trim())){ toast("Describe the problem or add a document first"); return; }
+  btn.classList.add("busy"); btn.disabled=true;
+  try{ var out=await askClaude(buildPrompt()); S.result=out; persist(); showResults(out); toast("Recommendation ready"); }
+  catch(e){ openFallback(buildPrompt()); }
+  finally{ btn.classList.remove("busy"); btn.disabled=false; }
+}
+/* fallback */
+function openFallback(prompt){ document.getElementById("mPrompt").textContent=prompt; document.getElementById("mResult").value=""; document.getElementById("modal").classList.add("show"); }
+function closeFallback(){ document.getElementById("modal").classList.remove("show"); }
+document.getElementById("mClose").onclick=closeFallback;
+document.getElementById("mCopy").onclick=function(){ navigator.clipboard.writeText(document.getElementById("mPrompt").textContent).then(function(){ toast("Prompt copied"); }); };
+document.getElementById("mApply").onclick=function(){
+  var raw=document.getElementById("mResult").value.trim(); if(!raw){ toast("Paste the assistant's result first"); return; }
+  try{ var clean=raw.replace(/```json/gi,"").replace(/```/g,"").trim(); var m=clean.match(/[\[{][\s\S]*[\]}]/); var out=JSON.parse(m?m[0]:clean);
+    S.result=out; persist(); closeFallback(); showResults(out); toast("Recommendation ready");
+  }catch(e){ toast("Couldn't read that — paste the full JSON result"); }
+};
+
+/* ===== helpers ===== */
+function esc(s){ return (s||"").replace(/&/g,"&amp;").replace(/</g,"&lt;").replace(/>/g,"&gt;"); }
+function toast(m){ var t=document.getElementById("toast"); t.textContent=m; t.classList.add("show"); clearTimeout(t._t); t._t=setTimeout(function(){ t.classList.remove("show"); },1900); }
+function mchip(name,sup){ var id=anchorFor(name); var cls="mchip"+(sup?" sup":""); 
+  if(id) return '<a class="'+cls+'" href="school.html#'+id+'">'+esc(name)+' <span class="ext">↗</span></a>';
+  return '<span class="'+cls+'">'+esc(name)+'</span>'; }
+
+/* ===== document upload ===== */
+function loadScript(src){ return new Promise(function(res,rej){ if(document.querySelector('script[data-src="'+src+'"]')){ res(); return; } var s=document.createElement('script'); s.src=src; s.setAttribute('data-src',src); s.onload=function(){res();}; s.onerror=function(){rej(new Error('load failed'));}; document.head.appendChild(s); }); }
+async function extractText(file){
+  var name=(file.name||"").toLowerCase();
+  if(name.endsWith('.txt')||file.type==='text/plain'){ return await file.text(); }
+  if(name.endsWith('.docx')){ await loadScript('https://cdnjs.cloudflare.com/ajax/libs/mammoth/1.6.0/mammoth.browser.min.js'); var ab=await file.arrayBuffer(); var r=await mammoth.extractRawText({arrayBuffer:ab}); return (r&&r.value)||""; }
+  if(name.endsWith('.pdf')){ await loadScript('https://cdnjs.cloudflare.com/ajax/libs/pdf.js/3.11.174/pdf.min.js');
+    pdfjsLib.GlobalWorkerOptions.workerSrc='https://cdnjs.cloudflare.com/ajax/libs/pdf.js/3.11.174/pdf.worker.min.js';
+    var ab2=await file.arrayBuffer(); var pdf=await pdfjsLib.getDocument({data:ab2}).promise; var out='';
+    for(var p=1;p<=pdf.numPages;p++){ var page=await pdf.getPage(p); var tc=await page.getTextContent(); out+=tc.items.map(function(it){return it.str;}).join(' ')+'\n\n'; }
+    return out.trim(); }
+  throw new Error('unsupported');
+}
+function renderDoc(){ var host=document.getElementById("docHost"); if(!host) return;
+  if(!S.docText){ host.innerHTML=""; return; }
+  host.innerHTML='<div class="docbox"><div class="dhd"><span class="fn">'+esc(S.docName||"document")+'</span><span class="cc">'+S.docText.length+' chars</span><button class="rm" title="remove">\u2715</button></div><textarea id="docText"></textarea></div>';
+  var t=host.querySelector("#docText"); t.value=S.docText; t.addEventListener("input",function(){ S.docText=t.value; persist(); var cc=host.querySelector(".cc"); if(cc) cc.textContent=S.docText.length+" chars"; });
+  host.querySelector(".rm").onclick=function(){ S.docText=""; S.docName=""; persist(); renderDoc(); var m=document.getElementById("dzmsg"); if(m) m.textContent="Drop an RFP, scoping email or pricing request here"; };
+}
+function setupDropzone(){ var dz=document.getElementById("dz"), inp=document.getElementById("fileDoc"); if(!dz) return;
+  dz.onclick=function(){ inp.click(); };
+  inp.onchange=function(e){ if(e.target.files[0]) handleFile(e.target.files[0]); inp.value=""; };
+  ["dragover","dragenter"].forEach(function(ev){ dz.addEventListener(ev,function(e){ e.preventDefault(); dz.classList.add("over"); }); });
+  dz.addEventListener("dragleave",function(e){ e.preventDefault(); dz.classList.remove("over"); });
+  dz.addEventListener("drop",function(e){ e.preventDefault(); dz.classList.remove("over"); var f=e.dataTransfer.files[0]; if(f) handleFile(f); });
+}
+async function handleFile(file){ var dz=document.getElementById("dz"), msg=document.getElementById("dzmsg"); dz.classList.add("dzbusy"); if(msg) msg.textContent="Reading "+file.name+"\u2026";
+  try{ var text=await extractText(file);
+    if(!text || text.replace(/\s/g,"").length<20){ toast("Hardly any text found — is it a scanned image? Paste the text instead."); if(msg) msg.textContent="Drop an RFP, scoping email or pricing request here"; }
+    else { if(text.length>9000) text=text.slice(0,9000)+"\n\n[\u2026truncated for length\u2026]"; S.docName=file.name; S.docText=text; persist(); renderDoc(); toast("Extracted — review and trim below"); if(msg) msg.textContent="Replace document"; }
+  }catch(e){ toast("Couldn't read that file — paste the text instead"); if(msg) msg.textContent="Drop an RFP, scoping email or pricing request here"; }
+  finally{ dz.classList.remove("dzbusy"); }
+}
+
+/* ===== intake render ===== */
+function renderIntake(){
+  var host=document.getElementById("qgrid"); host.innerHTML="";
+  GROUPS.forEach(function(g){
+    var grp=document.createElement("div"); grp.className="qgroup";
+    grp.innerHTML='<p class="lbl">'+esc(g.label)+' '+(g.req?'<span class="req">recommended</span>':'<span class="opt">optional</span>')+'</p>'
+      +'<div class="qopts">'+g.opts.map(function(o){ return '<button class="qopt'+(S[g.k]===o?" sel":"")+'" data-k="'+g.k+'" data-v="'+esc(o)+'">'+esc(o)+'</button>'; }).join("")+'</div>';
+    host.appendChild(grp);
+  });
+  host.querySelectorAll(".qopt").forEach(function(b){ b.onclick=function(){ var k=b.dataset.k; S[k]=(S[k]===b.dataset.v)?"":b.dataset.v; persist(); renderIntake(); }; });
+  var p=document.getElementById("q_problem"); p.value=S.problem; p.addEventListener("input",function(){ S.problem=p.value; persist(); });
+}
+
+/* ===== results render ===== */
+function showResults(r){
+  document.getElementById("intake").style.display="none";
+  var R=document.getElementById("results"); R.style.display="block";
+  var dom=(r.domain||"Complex").replace(/[^A-Za-z]/g,"");
+  var lc=(r.lifecycle||[]);
+  var html='<div class="resbanner dom-'+dom+'"><p class="dlabel">Diagnosis · '+esc(r.domain||"")+' domain</p>'
+    +'<h2>'+esc(r.archetype||"Recommended approach")+'</h2>'
+    +(r.domainWhy?'<p class="arch">'+esc(r.domainWhy)+'</p>':'')
+    +(r.why?'<p>'+esc(r.why)+'</p>':'')+'</div>';
+
+  html+='<div class="panel"><div class="combo">'
+    +'<div class="comboblock"><p class="lbl">Lead with <span class="sub">your primary method'+((r.primary||[]).length>1?'s':'')+'</span></p><div class="mchips">'
+    + (r.primary||[]).map(function(m){return mchip(m,false);}).join("") + '</div></div>'
+    +'<div class="comboblock"><p class="lbl">Bring in <span class="sub">supporting methods</span></p><div class="mchips">'
+    + (r.supporting||[]).map(function(m){return mchip(m,true);}).join("") + '</div></div>'
+    +'</div></div>';
+
+  if(lc.length){
+    html+='<div class="panel"><p class="lbl">Across the engagement <span class="hint" style="margin:0;font-weight:400;text-transform:none;letter-spacing:0">— '+(r.startAt?'start at '+esc(r.startAt)+', given the stage':'sequenced')+'</span></p><div class="lifecycle">';
+    lc.forEach(function(p){ var start=(r.startAt && p.phase && r.startAt.toLowerCase()===p.phase.toLowerCase());
+      html+='<div class="lc'+(start?' start':'')+'">'+(start?'<span class="startflag">START HERE</span>':'')
+        +'<p class="ph">'+esc(p.phase)+'</p>'+(p.method?'<p class="m">'+esc(p.method)+'</p>':'')+'<p class="f">'+esc(p.focus||"")+'</p></div>';
+    });
+    html+='</div></div>';
+  }
+
+  html+='<div class="twopane">'
+    +'<div class="gatebox"><p class="gi">Sign-off gate <span class="gibadge '+(r.gate||"Standard")+'">'+esc(r.gate||"Standard")+'</span></p><p>'+esc(r.gateWhy||"")+'</p></div>'
+    +'<div class="humanbox"><p class="hi">The part no AI lands</p><p>'+esc(r.humanLanding||"")+'</p></div>'
+    +'</div>';
+
+  html+='<div class="analyserow" style="margin-top:20px"><button class="btn solid" id="againBtn">‹ New diagnosis</button>'
+    +'<span class="hint" style="margin:0">Method links open that methodology in the learning platform.</span></div>';
+
+  R.innerHTML=html;
+  document.getElementById("againBtn").onclick=function(){ R.style.display="none"; R.innerHTML=""; document.getElementById("intake").style.display="block"; window.scrollTo({top:0,behavior:"smooth"}); };
+  window.scrollTo({top:0,behavior:"smooth"});
+}
+
+/* ===== toolbar ===== */
+document.getElementById("analyseBtn").onclick=function(){ analyse(this); };
+document.getElementById("printBtn").onclick=function(){ window.print(); };
+document.getElementById("resetBtn").onclick=function(){ if(confirm("Clear and start fresh?")){ S=JSON.parse(JSON.stringify(BLANK)); persist(); document.getElementById("results").style.display="none"; document.getElementById("intake").style.display="block"; renderIntake(); } };
+
+renderIntake(); setupDropzone(); renderDoc();
+if(S.result) showResults(S.result);
+</script>
+</body>
+</html>

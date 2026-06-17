@@ -1,0 +1,227 @@
+<!DOCTYPE html>
+<html lang="en-GB">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>BDO · AI-Augmented Consulting Platform</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Montserrat:wght@400;500;600;700;800&display=swap" rel="stylesheet">
+<style>
+  /* tokens are set from CONFIG at runtime — defaults below are the live brand */
+  :root{
+    --primary:#E81A3B; --secondary:#22409A;
+    --ink:#1d1d1b; --ink-2:#42423f; --paper:#ffffff; --paper-2:#f4f4f7;
+    --line:#e5e5ea; --line-2:#d4d4dc; --muted:#6c6c75;
+    --font:'Montserrat','Trebuchet MS',system-ui,sans-serif;
+  }
+  *{box-sizing:border-box}
+  html{scroll-behavior:smooth}
+  body{margin:0;font-family:var(--font);background:var(--paper);color:var(--ink);line-height:1.5;-webkit-font-smoothing:antialiased}
+  a{color:inherit;text-decoration:none}
+
+  /* ---------- header ---------- */
+  .top{border-bottom:1px solid var(--line);background:#fff;position:sticky;top:0;z-index:40}
+  .top .wrap{max-width:1140px;margin:0 auto;padding:16px 22px;display:flex;align-items:center;gap:16px}
+  .logo{height:34px;width:auto;display:block}
+  .top .pname{margin-left:4px;padding-left:16px;border-left:1px solid var(--line-2);display:flex;flex-direction:column}
+  .top .pname b{font-weight:700;font-size:15px;letter-spacing:-.01em}
+  .top .pname small{font-size:9.5px;letter-spacing:.22em;color:var(--muted);font-weight:600}
+  .top .cta{margin-left:auto;font-weight:700;font-size:13px;background:var(--primary);color:#fff;padding:9px 16px;border-radius:7px}
+  .top .cta:hover{filter:brightness(1.05)}
+
+  /* ---------- hero ---------- */
+  .hero{position:relative;overflow:hidden;background:var(--paper);border-bottom:1px solid var(--line)}
+  .hero .wrap{max-width:1140px;margin:0 auto;padding:60px 22px 54px;position:relative;z-index:2}
+  .hero .ey{font-weight:700;font-size:12px;letter-spacing:.18em;text-transform:uppercase;color:var(--primary);margin:0 0 14px}
+  .hero h1{font-weight:800;font-size:clamp(2rem,5vw,3.2rem);line-height:1.02;letter-spacing:-.025em;margin:0 0 16px;max-width:18ch}
+  .hero h1 .r{color:var(--primary)}
+  .hero p{font-size:clamp(1rem,1.6vw,1.18rem);color:var(--ink-2);max-width:60ch;margin:0 0 26px;line-height:1.5}
+  .hero .btns{display:flex;gap:12px;flex-wrap:wrap}
+  .btn{font-weight:700;font-size:14px;padding:12px 22px;border-radius:8px;display:inline-flex;align-items:center;gap:8px;border:1px solid transparent;cursor:pointer}
+  .btn.solid{background:var(--primary);color:#fff}.btn.solid:hover{filter:brightness(1.05)}
+  .btn.line{background:#fff;border-color:var(--line-2);color:var(--ink)}.btn.line:hover{border-color:var(--ink)}
+  /* BDO secondary diagonal shape */
+  .hero .shape{position:absolute;top:-80px;right:-120px;width:520px;height:520px;background:var(--primary);
+     transform:rotate(35deg);opacity:.07;z-index:1;border-radius:40px}
+  .hero .shape2{position:absolute;bottom:-160px;right:120px;width:300px;height:300px;background:var(--secondary);
+     transform:rotate(35deg);opacity:.05;z-index:1;border-radius:30px}
+
+  /* ---------- sections ---------- */
+  .section{max-width:1140px;margin:0 auto;padding:48px 22px}
+  .shead{display:flex;align-items:flex-end;justify-content:space-between;gap:16px;flex-wrap:wrap;margin:0 0 22px}
+  .shead h2{font-weight:800;font-size:clamp(1.4rem,2.6vw,1.9rem);letter-spacing:-.02em;margin:0}
+  .shead .bar{height:4px;width:46px;background:var(--primary);border-radius:3px;margin:0 0 10px}
+  .shead p{margin:6px 0 0;color:var(--muted);font-size:14.5px;max-width:62ch}
+
+  .grid{display:grid;grid-template-columns:repeat(3,1fr);gap:18px}
+  .tile{position:relative;border:1px solid var(--line);border-radius:14px;padding:22px 20px 20px;background:#fff;
+     display:flex;flex-direction:column;transition:transform .14s,box-shadow .14s,border-color .14s;min-height:170px}
+  .tile:hover{transform:translateY(-3px);box-shadow:0 14px 30px -18px rgba(20,20,40,.4);border-color:var(--line-2)}
+  .tile .acc{height:4px;width:38px;border-radius:3px;background:var(--primary);margin:0 0 14px}
+  .tile .tag{position:absolute;top:18px;right:18px;font-size:9.5px;font-weight:700;letter-spacing:.06em;text-transform:uppercase;color:var(--muted);border:1px solid var(--line-2);padding:3px 8px;border-radius:5px}
+  .tile h3{font-weight:700;font-size:17px;letter-spacing:-.01em;margin:0 0 7px}
+  .tile p{font-size:14px;color:var(--ink-2);margin:0 0 16px;line-height:1.45;flex:1}
+  .tile .go{font-weight:700;font-size:13.5px;color:var(--primary);display:inline-flex;align-items:center;gap:6px}
+
+  /* firm tools slot */
+  .firm{background:var(--paper-2);border-top:1px solid var(--line)}
+  .firm .section{padding-top:44px;padding-bottom:52px}
+  .tile.firm-t{background:#fff;border-style:dashed;border-color:var(--line-2)}
+  .tile.firm-t .acc{background:var(--secondary)}
+  .tile.firm-t .tag{color:var(--secondary);border-color:#c3cbe8}
+  .tile.firm-t .status{font-weight:700;font-size:12.5px;color:var(--secondary);display:inline-flex;align-items:center;gap:6px}
+  .tile.add{border-style:dashed;border-color:var(--primary);align-items:center;justify-content:center;text-align:center;background:#fff;color:var(--primary);min-height:170px}
+  .tile.add .plus{font-size:30px;font-weight:300;line-height:1;margin:0 0 8px}
+  .tile.add b{font-weight:700;font-size:15px}.tile.add span{font-size:12.5px;color:var(--muted);margin-top:4px;display:block}
+
+  .ribbon{max-width:1140px;margin:8px auto 0;padding:0 22px}
+  .ribbon .inner{background:var(--ink);color:#fff;border-radius:16px;padding:26px 28px;display:flex;align-items:center;gap:22px;flex-wrap:wrap}
+  .ribbon h3{margin:0 0 5px;font-weight:800;font-size:19px;letter-spacing:-.01em}
+  .ribbon p{margin:0;color:#cfcfd6;font-size:14px;max-width:60ch}
+  .ribbon .r-cta{margin-left:auto;background:var(--primary);color:#fff;font-weight:700;font-size:14px;padding:12px 20px;border-radius:8px}
+
+  .footer{border-top:1px solid var(--line);margin-top:30px}
+  .footer .wrap{max-width:1140px;margin:0 auto;padding:26px 22px;display:flex;align-items:center;justify-content:space-between;gap:16px;flex-wrap:wrap}
+  .footer .sl{font-weight:700;font-size:12px;letter-spacing:.2em;color:var(--muted)}
+  .footer .meta{font-size:11.5px;color:var(--muted);max-width:60ch}
+
+  @media (max-width:860px){ .grid{grid-template-columns:1fr 1fr} }
+  @media (max-width:600px){ .grid{grid-template-columns:1fr} .hero .wrap{padding:44px 22px 40px} .top .pname{display:none} }
+  @media (prefers-reduced-motion:reduce){*{transition:none!important}}
+</style>
+</head>
+<body>
+
+<header class="top">
+  <div class="wrap">
+    <span id="logoSlot"></span>
+    <span class="pname"><b id="pName">AI-Augmented Consulting</b><small id="pStrap">IDEAS | PEOPLE | TRUST</small></span>
+    <a class="cta" href="#platform">Enter the platform →</a>
+  </div>
+</header>
+
+<section class="hero">
+  <span class="shape"></span><span class="shape2"></span>
+  <div class="wrap">
+    <p class="ey" id="heroEy">The augmented consulting platform</p>
+    <h1 id="heroH1">Let the model compute. <span class="r">Your people decide.</span></h1>
+    <p id="heroP">One platform for the whole craft — a methodology school, an AI problem diagnostic, and working tools
+       that draft at scale while a named human signs off every decision that touches your client's money, people or
+       regulator. Built on your methodologies. Branded as yours.</p>
+    <div class="btns">
+      <a class="btn solid" href="#platform">Explore the tools</a>
+      <a class="btn line" href="#firm">Add your firm's IP →</a>
+    </div>
+  </div>
+</section>
+
+<section class="section" id="platform">
+  <div class="shead"><div><div class="bar"></div><h2>The tools</h2><p id="platSub">Ready to use today — each one augments a consultant rather than replacing one.</p></div></div>
+  <div class="grid" id="toolGrid"></div>
+</section>
+
+<div class="firm" id="firm">
+  <section class="section">
+    <div class="shead"><div><div class="bar" style="background:var(--secondary)"></div><h2>Your firm's tools</h2>
+      <p>This is where BDO's own methodologies and bespoke IP live, alongside the platform — built into the product with your team, on your domain.</p></div></div>
+    <div class="grid" id="firmGrid"></div>
+  </section>
+</div>
+
+<div class="ribbon">
+  <div class="inner">
+    <div><h3>One platform. Your brand. Your IP. Ready in days.</h3>
+      <p>Everything here is configured from a single brand profile — your logo, your colours, your tools. We integrate your proprietary frameworks and ship it on your domain.</p></div>
+    <a class="r-cta" href="#platform">See it in action</a>
+  </div>
+</div>
+
+<footer class="footer">
+  <div class="wrap">
+    <span class="sl" id="footStrap">IDEAS | PEOPLE | TRUST</span>
+    <span class="meta">Platform &amp; method synthesis © its author, licensed to <span id="footBrand">BDO</span>. Methodologies referenced are their respective owners'. BDO branding shown under demonstration for BDO LLP.</span>
+  </div>
+</footer>
+
+<script>
+"use strict";
+/* =====================================================================
+   WHITE-LABEL CONFIG  —  this single block defines the brand & contents.
+   To produce another client's build, change THIS block only.
+   ===================================================================== */
+var CONFIG = {
+  brand: {
+    name: "BDO",
+    product: "AI-Augmented Consulting",
+    strapline: "IDEAS | PEOPLE | TRUST",
+    colours: { primary:"#E81A3B", secondary:"#22409A", ink:"#1d1d1b", paper:"#ffffff" },
+    font: "'Montserrat','Trebuchet MS',system-ui,sans-serif",
+    logoSvg: '<svg class="logo" viewBox="0 0 1667 1080" xmlns="http://www.w3.org/2000/svg" fill="none" role="img" aria-label="BDO">'
+      +'<path d="M540.76 509.51H573.606C627.585 509.51 655.107 521.293 655.107 552.916C655.107 580.911 633.043 592.761 598.399 592.761H545.818L485.716 634.869H598C665.224 634.869 710.517 610.669 710.517 554.614C710.517 505.748 670.449 486.542 634.707 486.542C659.4 486.542 688.619 464.406 688.619 426.825C688.619 389.243 654.275 362.347 615.139 362.347H500.526H475.666L485.716 384.683V615.296L540.727 576.75V509.543L540.76 509.51ZM540.76 404.456H598.433C614.273 404.456 634.308 408.25 634.308 435.113C634.308 461.976 605.654 472.96 584.389 472.96H540.76V404.456Z" fill="#28348A"/>'
+      +'<path d="M801.069 404.456H838.542C854.016 404.456 932.855 408.383 932.855 498.625C932.855 601.615 838.542 592.761 838.542 592.761H806.194L746.059 634.869H854.016C921.24 634.869 990.195 593.493 990.195 498.592C990.195 414.442 929.993 362.314 854.016 362.314H736.009L746.059 384.65V615.263L801.069 576.75V404.456Z" fill="#28348A"/>'
+      +'<path d="M1015.62 498.592C1015.62 607.34 1103.48 637.865 1160.42 637.865C1217.36 637.865 1305.21 607.307 1305.21 498.592C1305.21 389.876 1217.32 359.318 1160.38 359.318C1103.44 359.318 1015.59 389.876 1015.59 498.592H1015.62ZM1072.93 498.592C1072.93 421.532 1126.01 399.862 1160.42 399.862C1194.83 399.862 1247.87 421.499 1247.87 498.592C1247.87 575.684 1194.79 597.321 1160.42 597.321C1126.04 597.321 1072.93 575.684 1072.93 498.592Z" fill="#28348A"/>'
+      +'<path d="M361.818 362.347V702.076L415.564 664.428V362.347H361.818Z" fill="#E81A3B"/>'
+      +'<path d="M425.614 677.01L361.818 721.682H1302.19V677.01H425.614Z" fill="#E81A3B"/></svg>'
+  },
+  hero: {
+    eyebrow: "The augmented consulting platform",
+    h1: 'Let the model compute. <span class="r">Your people decide.</span>',
+    body: "One platform for the whole craft — a methodology school, an AI problem diagnostic, and working tools that draft at scale while a named human signs off every decision that touches your client's money, people or regulator. Built on your methodologies. Branded as yours."
+  },
+  /* the platform tools (the licensed product) */
+  tools: [
+    {title:"BDO Consulting School", tag:"Learning", href:"school.html",
+     desc:"Nineteen methodologies, each with AI-augmentation points, a per-concept navigator and a full prompt library."},
+    {title:"BDO Consulting Delivery Enablement", tag:"Diagnostic", href:"problem-diagnostic.html",
+     desc:"Describe a client problem — or upload their RFP — and get the right methodology combination, sequenced across the engagement."},
+    {title:"Design Thinking Canvas", tag:"Tool", href:"design-thinking-canvas.html",
+     desc:"Empathise to test, AI-augmented, with a human sign-off gate at the point the problem gets framed."},
+    {title:"Jobs to be Done", tag:"Tool", href:"jobs-to-be-done-toolset.html",
+     desc:"Find the real job, map the forces of progress, and score where need outruns satisfaction."},
+    {title:"Blue Ocean Strategy", tag:"Tool", href:"blue-ocean-strategy.html",
+     desc:"Draw your value curve away from the pack on a live canvas — and export it straight to the board deck."}
+  ],
+  /* the white-label slot — the firm's own IP plugs in here */
+  firmTools: [
+    {title:"7-Phase Delivery Methodology", desc:"Your engagement lifecycle — Preparation through to How We Operate — as a guided, AI-augmented flow.", status:"Ready to integrate"},
+    {title:"Four-Eyes Risk Assessment", desc:"Your FS Advisory review discipline, extended into the age of AI with named sign-off.", status:"Built with your team"},
+    {title:"Deal Go/No-Go Framework", desc:"Your >£200k qualification gate, as an interactive decision tool.", status:"Built with your team"},
+    {title:"Pipeline Stage Gates", desc:"Pre-Qualification to Take-On governance, wired into the platform.", status:"Built with your team"}
+  ]
+};
+
+/* ===== apply config ===== */
+function applyConfig(c){
+  var root=document.documentElement.style;
+  root.setProperty("--primary", c.brand.colours.primary);
+  root.setProperty("--secondary", c.brand.colours.secondary);
+  root.setProperty("--ink", c.brand.colours.ink);
+  root.setProperty("--paper", c.brand.colours.paper);
+  if(c.brand.font) root.setProperty("--font", c.brand.font);
+  document.getElementById("logoSlot").innerHTML = c.brand.logoSvg;
+  document.getElementById("pName").textContent = c.brand.product;
+  document.getElementById("pStrap").textContent = c.brand.strapline;
+  document.getElementById("footStrap").textContent = c.brand.strapline;
+  document.getElementById("footBrand").textContent = c.brand.name;
+  document.getElementById("heroEy").textContent = c.hero.eyebrow;
+  document.getElementById("heroH1").innerHTML = c.hero.h1;
+  document.getElementById("heroP").textContent = c.hero.body;
+
+  var tg=document.getElementById("toolGrid");
+  tg.innerHTML = c.tools.map(function(t){
+    return '<a class="tile" href="'+t.href+'"><div class="acc"></div><span class="tag">'+t.tag+'</span>'
+      +'<h3>'+t.title+'</h3><p>'+t.desc+'</p><span class="go">Open →</span></a>';
+  }).join("");
+
+  var fg=document.getElementById("firmGrid");
+  fg.innerHTML = c.firmTools.map(function(t){
+    return '<div class="tile firm-t"><div class="acc"></div><span class="tag">Your IP</span>'
+      +'<h3>'+t.title+'</h3><p>'+t.desc+'</p><span class="status">● '+t.status+'</span></div>';
+  }).join("")
+  + '<div class="tile add"><div class="plus">+</div><b>Add your firm\'s tool</b><span>Bring a methodology or template — we build it in.</span></div>';
+}
+applyConfig(CONFIG);
+</script>
+</body>
+</html>

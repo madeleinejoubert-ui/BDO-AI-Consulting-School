@@ -1,0 +1,492 @@
+<!DOCTYPE html>
+<html lang="en-GB">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Jobs to be Done Toolset — find the job, score the opportunity</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Archivo:wght@500;600;700;800&family=Newsreader:ital,opsz,wght@0,6..72,400;0,6..72,500;0,6..72,600;1,6..72,400&family=IBM+Plex+Mono:wght@400;500;600&display=swap" rel="stylesheet">
+<style>
+  :root{
+    --ink:#1b1a2e; --ink-2:#3a3852;
+    --paper:#f7f8fc; --paper-2:#ecedf6; --card:#ffffff;
+    --ai:#2f6bff;   --ai-soft:#e1eaff;   --ai-line:#a9c2ff;   --ai-ink:#1a48b8;
+    --human:#ef8a17;--human-soft:#ffe9cf;--human-line:#ffc684;--human-ink:#9a4e0d;
+    --gate:#e23744; --gate-soft:#ffe0e2; --gate-line:#f3aeb4;
+    --pop:#7c4dff;  --pop-soft:#efe7ff;  --green:#1f9d57;
+    --line:#e6e4f1; --line-2:#d3cfe6; --muted:#67637e;
+    --display:'Archivo',system-ui,sans-serif;
+    --body:'Newsreader',Georgia,serif;
+    --mono:'IBM Plex Mono',ui-monospace,monospace;
+    --rainbow:linear-gradient(90deg,#7c4dff,#2f6bff,#12b3a6,#ef8a17,#e23744);
+  }
+  *{box-sizing:border-box}
+  html{scroll-behavior:smooth}
+  body{margin:0;font-family:var(--body);background:var(--paper);color:var(--ink);font-size:16px;line-height:1.5;-webkit-font-smoothing:antialiased}
+  h1,h2,h3,h4,.lbl,.eyebrow,button,.step,.chip,.tag,input,select,textarea{font-family:var(--display)}
+  button{cursor:pointer}
+  textarea,input[type=text]{font-family:var(--mono)}
+
+  .topbar{position:sticky;top:0;z-index:60;background:rgba(247,248,252,.9);backdrop-filter:blur(8px);border-bottom:1px solid var(--line)}
+  .topbar .wrap{max-width:1180px;margin:0 auto;padding:11px 20px;display:flex;align-items:center;gap:14px;flex-wrap:wrap}
+  .brand{display:flex;align-items:center;gap:11px;font-family:var(--display);font-weight:800;font-size:15px;letter-spacing:-.01em}
+  .brand .dot{width:24px;height:24px;border-radius:50%;background:conic-gradient(from 130deg,#7c4dff,#2f6bff,#12b3a6,#ef8a17,#e23744,#7c4dff);box-shadow:inset 0 0 0 4px var(--paper),inset 0 0 0 5px var(--line-2)}
+  .brand small{display:block;font-weight:600;font-size:10px;letter-spacing:.16em;color:var(--muted);text-transform:uppercase}
+  .topbar .tools{margin-left:auto;display:flex;gap:7px;flex-wrap:wrap}
+  .btn{border:1px solid var(--line-2);background:var(--card);color:var(--ink);font-weight:600;font-size:12.5px;padding:7px 12px;border-radius:8px;display:inline-flex;align-items:center;gap:6px;text-decoration:none}
+  .btn:hover{background:var(--paper-2)}
+  .btn.ghost{border-color:transparent;background:transparent;color:var(--muted)}
+  .btn.solid{background:var(--pop);border-color:var(--pop);color:#fff}
+  .btn.solid:hover{filter:brightness(1.06)}
+
+  .hero{max-width:1180px;margin:0 auto;padding:26px 20px 6px}
+  .hero h1{font-weight:800;letter-spacing:-.02em;font-size:clamp(1.6rem,3.6vw,2.3rem);line-height:1.04;margin:0 0 8px}
+  .hero h1 .g{background:var(--rainbow);-webkit-background-clip:text;background-clip:text;color:transparent;-webkit-text-fill-color:transparent}
+  .hero p{max-width:72ch;color:var(--ink-2);margin:0 0 4px}
+  .legend{display:flex;gap:16px;flex-wrap:wrap;margin:14px 0 2px;font-family:var(--display);font-size:12px;font-weight:600}
+  .legend span{display:inline-flex;align-items:center;gap:7px;color:var(--ink-2)}
+  .legend i{width:22px;height:12px;border-radius:4px;display:inline-block}
+  .legend .iai{background:var(--ai-soft);border:1px solid var(--ai-line)}
+  .legend .ihu{background:var(--human-soft);border:1px solid var(--human-line)}
+  .legend .iga{background:var(--gate-soft);border:1px solid var(--gate-line)}
+
+  .stepper{max-width:1180px;margin:18px auto 0;padding:0 20px}
+  .steptrack{position:relative;display:flex;border-radius:999px;background:var(--paper-2);padding:5px;overflow:hidden}
+  .step{flex:1 1 0;position:relative;z-index:2;border:none;background:transparent;border-radius:999px;padding:10px 6px;text-align:center;font-weight:700;font-size:12.5px;color:var(--muted);letter-spacing:-.01em;display:flex;flex-direction:column;align-items:center;gap:3px;transition:color .2s}
+  .step .n{width:22px;height:22px;border-radius:50%;background:var(--card);border:2px solid var(--line-2);display:flex;align-items:center;justify-content:center;font-size:11px;color:var(--muted)}
+  .step.active{color:#fff}.step.active .n{background:#fff;border-color:#fff;color:var(--pop)}
+  .step.done .n{background:var(--pop);border-color:var(--pop);color:#fff}
+  .stepfill{position:absolute;top:5px;bottom:5px;border-radius:999px;background:var(--rainbow);transition:left .28s cubic-bezier(.4,0,.2,1),width .28s cubic-bezier(.4,0,.2,1);z-index:1}
+
+  .stage{max-width:1180px;margin:22px auto 40px;padding:0 20px}
+  .stagehead{display:flex;align-items:baseline;gap:12px;margin:0 0 4px;flex-wrap:wrap}
+  .stagehead h2{font-size:clamp(1.3rem,2.6vw,1.7rem);font-weight:800;letter-spacing:-.02em;margin:0}
+  .stagehead .ix{font-family:var(--mono);font-size:12px;color:var(--pop);font-weight:600}
+  .stagesub{color:var(--ink-2);max-width:76ch;margin:0 0 18px}
+
+  .augband{display:flex;gap:10px;flex-wrap:wrap;margin:0 0 20px}
+  .augpill{font-family:var(--mono);font-size:11.5px;border-radius:9px;padding:8px 12px;line-height:1.35;flex:1 1 220px}
+  .augpill b{font-family:var(--display);font-size:10px;letter-spacing:.07em;text-transform:uppercase;display:block;margin:0 0 3px}
+  .augpill.ai{background:var(--ai-soft);border:1px solid var(--ai-line);color:var(--ai-ink)}
+  .augpill.hu{background:var(--human-soft);border:1px solid var(--human-line);color:var(--human-ink)}
+  .augpill.ga{background:var(--gate-soft);border:1px solid var(--gate-line);color:var(--gate)}
+
+  .grid{display:grid;gap:16px}.g2{grid-template-columns:1fr 1fr}.col{display:flex;flex-direction:column;gap:16px}
+  .panel{background:var(--card);border:1px solid var(--line);border-radius:14px;padding:16px}
+  .panel.aizone{border-color:var(--ai-line);background:linear-gradient(180deg,var(--ai-soft),var(--card) 60%)}
+  .panel.huzone{border-color:var(--human-line);background:linear-gradient(180deg,var(--human-soft),var(--card) 60%)}
+  .panel.gazone{border-color:var(--gate-line);background:linear-gradient(180deg,var(--gate-soft),var(--card) 60%)}
+  .lbl{font-weight:700;font-size:12.5px;letter-spacing:.02em;text-transform:uppercase;margin:0 0 9px;display:flex;align-items:center;gap:8px}
+  .tagmini{font-size:9.5px;font-weight:700;letter-spacing:.06em;padding:2px 6px;border-radius:5px;color:#fff}
+  .tagmini.ai{background:var(--ai)}.tagmini.hu{background:var(--human)}.tagmini.ga{background:var(--gate)}
+  .hint{font-family:var(--body);font-size:13.5px;color:var(--muted);margin:0 0 10px}
+  textarea,input[type=text]{width:100%;border:1px solid var(--line-2);border-radius:9px;padding:10px 11px;font-size:13px;line-height:1.5;color:var(--ink);background:var(--paper);resize:vertical}
+  textarea:focus,input:focus{outline:2px solid var(--pop);outline-offset:1px;border-color:transparent}
+  textarea.note{min-height:120px}textarea.sm{min-height:64px}
+
+  .aibtn{background:var(--ai);border:1px solid var(--ai);color:#fff;font-weight:700;font-size:12.5px;padding:8px 13px;border-radius:9px;display:inline-flex;align-items:center;gap:7px;margin:10px 8px 0 0}
+  .aibtn:hover{filter:brightness(1.06)}.aibtn:disabled{opacity:.55;cursor:wait}
+  .aibtn.busy .spark{animation:spin 1s linear infinite;display:inline-block}
+  @keyframes spin{to{transform:rotate(360deg)}}
+
+  /* job statement display */
+  .jobline{font-family:var(--body);font-size:clamp(1.05rem,2.1vw,1.35rem);line-height:1.5;background:var(--pop-soft);border:1px solid var(--line-2);border-radius:12px;padding:16px 18px}
+  .jobline b{font-family:var(--display);font-weight:800;color:var(--pop)}
+  .dims{display:grid;grid-template-columns:1fr 1fr 1fr;gap:12px;margin-top:14px}
+  .dim .lbl{margin-bottom:6px}
+
+  /* forces */
+  .forces{display:grid;grid-template-columns:1fr 1fr;gap:14px}
+  .force{border-radius:12px;padding:14px;border:1px solid var(--line)}
+  .force .ttl{font-family:var(--display);font-weight:800;font-size:14px;margin:0 0 2px;display:flex;align-items:center;gap:8px}
+  .force .sub{font-family:var(--mono);font-size:10.5px;color:var(--muted);margin:0 0 9px;text-transform:uppercase;letter-spacing:.05em}
+  .force.toward{background:var(--ai-soft);border-color:var(--ai-line)}.force.toward .ttl{color:var(--ai-ink)}
+  .force.against{background:var(--human-soft);border-color:var(--human-line)}.force.against .ttl{color:var(--human-ink)}
+  .force .arrow{font-size:16px}
+
+  /* opportunity scorer */
+  .scorehead{display:flex;align-items:center;gap:10px;flex-wrap:wrap;margin:0 0 12px}
+  .scorehead .ttl{font-family:var(--display);font-weight:800;font-size:16px}
+  .scorehead .sp{margin-left:auto;display:flex;gap:7px;flex-wrap:wrap}
+  .otable{display:flex;flex-direction:column;gap:9px}
+  .ohdr,.orow{display:grid;grid-template-columns:1fr 150px 150px 120px 30px;gap:12px;align-items:center}
+  .ohdr{font-family:var(--display);font-size:10px;font-weight:700;letter-spacing:.06em;text-transform:uppercase;color:var(--muted);padding:0 2px}
+  .orow{background:var(--card);border:1px solid var(--line);border-radius:11px;padding:10px 12px}
+  .orow.hot{border-color:var(--pop);box-shadow:0 0 0 1px var(--pop) inset}
+  .orow input[type=text]{border:none;background:transparent;padding:6px 4px;font-family:var(--body);font-size:15px}
+  .orow input[type=text]:focus{outline:1px solid var(--line-2);border-radius:6px}
+  .sld{display:flex;align-items:center;gap:8px}
+  .sld input[type=range]{flex:1;accent-color:var(--pop)}
+  .sld .v{font-family:var(--mono);font-size:12px;width:18px;text-align:right;color:var(--ink-2)}
+  .opp{display:flex;align-items:center;gap:8px}
+  .opp .bar{flex:1;height:8px;border-radius:5px;background:var(--paper-2);overflow:hidden}
+  .opp .bar i{display:block;height:100%;background:linear-gradient(90deg,#a9c2ff,#7c4dff)}
+  .opp .num{font-family:var(--display);font-weight:800;font-size:15px;width:30px;text-align:right}
+  .orow.hot .opp .num{color:var(--pop)}
+  .del{border:none;background:transparent;color:var(--muted);font-size:16px;line-height:1}
+  .del:hover{color:var(--gate)}
+  .hottag{font-size:9px;font-weight:700;letter-spacing:.05em;color:#fff;background:var(--pop);padding:2px 6px;border-radius:5px;margin-left:8px}
+  .scorekey{font-family:var(--mono);font-size:11px;color:var(--muted);margin:12px 2px 0}
+
+  .chips{display:flex;flex-wrap:wrap;gap:8px;margin:6px 0 0}
+  .chip{background:var(--paper-2);border:1px solid var(--line-2);border-radius:999px;padding:6px 11px;font-size:12.5px;font-weight:600;color:var(--ink-2);cursor:pointer}
+  .chip:hover{border-color:var(--pop);color:var(--ink)}.chip.sel{background:var(--pop);border-color:var(--pop);color:#fff}
+  .empty{font-family:var(--body);color:var(--muted);font-size:13.5px;font-style:italic}
+  .row{display:flex;gap:8px;align-items:center;flex-wrap:wrap}
+
+  .gatecard{display:flex;gap:12px;align-items:flex-start}
+  .gatecard .check{flex:none;width:22px;height:22px;border-radius:6px;border:2px solid var(--gate-line);background:var(--card);display:flex;align-items:center;justify-content:center;cursor:pointer;margin-top:2px}
+  .gatecard .check.on{background:var(--gate);border-color:var(--gate);color:#fff}
+
+  .modal{position:fixed;inset:0;background:rgba(20,20,40,.5);z-index:100;display:none;align-items:center;justify-content:center;padding:20px}
+  .modal.show{display:flex}
+  .modalcard{background:var(--card);border-radius:16px;max-width:640px;width:100%;padding:22px;max-height:86vh;overflow:auto;border:1px solid var(--line)}
+  .modalcard h3{margin:0 0 6px;font-size:18px}.modalcard p{font-size:14px;color:var(--ink-2);margin:0 0 12px}
+  .modalcard pre{background:#11131c;color:#e8eef0;border-radius:10px;padding:14px;font-family:var(--mono);font-size:12px;line-height:1.5;white-space:pre-wrap;word-break:break-word;max-height:40vh;overflow:auto}
+  .modalrow{display:flex;gap:8px;justify-content:flex-end;margin-top:14px;flex-wrap:wrap}
+  .toast{position:fixed;left:50%;bottom:24px;transform:translateX(-50%) translateY(20px);background:var(--ink);color:#fff;padding:11px 18px;border-radius:10px;font-family:var(--display);font-weight:600;font-size:13px;opacity:0;transition:opacity .25s,transform .25s;z-index:120;pointer-events:none}
+  .toast.show{opacity:1;transform:translateX(-50%) translateY(0)}
+  .footer{max-width:1180px;margin:0 auto;padding:18px 20px 40px;color:var(--muted);font-family:var(--mono);font-size:11.5px;border-top:1px solid var(--line);display:flex;justify-content:space-between;gap:12px;flex-wrap:wrap}
+  .navbtns{display:flex;justify-content:space-between;gap:12px;margin:24px 0 0}
+
+  @media (max-width:820px){
+    .g2,.dims,.forces{grid-template-columns:1fr}
+    .ohdr{display:none}
+    .orow{grid-template-columns:1fr;gap:8px}
+    .step .lbltext{display:none}.step{font-size:0}
+    .augpill{flex-basis:100%}
+  }
+  @media (prefers-reduced-motion:reduce){*{animation-duration:.001ms!important;transition-duration:.001ms!important}}
+  @media print{.topbar,.stepper,.aibtn,.navbtns,.augband,.btn,.modal,.toast,.scorehead .sp{display:none!important}.stage{display:block!important;page-break-after:always}body{background:#fff}}
+</style>
+</head>
+<body>
+
+<div class="topbar">
+  <div class="wrap">
+    <div class="brand"><span class="dot"></span><span>Jobs to be Done<small>Find the job · score the opportunity</small></span></div>
+    <div class="tools">
+      <button class="btn" id="saveBtn">⭳ Save</button>
+      <button class="btn" id="loadBtn">⭱ Load</button>
+      <button class="btn" id="printBtn">⎙ Export</button>
+      <button class="btn ghost" id="resetBtn">Reset</button>
+      <input type="file" id="fileIn" accept="application/json" hidden>
+    </div>
+  </div>
+</div>
+
+<div class="hero">
+  <h1>People don't buy products. <span class="g">They hire them to make progress.</span></h1>
+  <p>A working toolset for Jobs to be Done — name the real job, map the forces that drive and block the switch,
+     score where need outstrips satisfaction, and go validate. AI mines and drafts above the line; you judge the
+     real human need below it; a gate marks the one need worth building for.</p>
+  <div class="legend">
+    <span><i class="iai"></i>AI drafts for you</span>
+    <span><i class="ihu"></i>The judgement that stays human</span>
+    <span><i class="iga"></i>Sign-off gate</span>
+  </div>
+</div>
+
+<div class="stepper">
+  <div class="steptrack" id="steptrack">
+    <div class="stepfill" id="stepfill"></div>
+    <button class="step" data-i="0"><span class="n">1</span><span class="lbltext">The Job</span></button>
+    <button class="step" data-i="1"><span class="n">2</span><span class="lbltext">Forces</span></button>
+    <button class="step" data-i="2"><span class="n">3</span><span class="lbltext">Opportunities</span></button>
+    <button class="step" data-i="3"><span class="n">4</span><span class="lbltext">Switch interview</span></button>
+  </div>
+</div>
+
+<main id="stageHost"></main>
+
+<div class="footer">
+  <span id="saveState">Your work autosaves in this browser · use Save to keep a file</span>
+  <span>Original synthesis &amp; method curation © its author · methodologies referenced are their owners'</span>
+</div>
+
+<div class="modal" id="modal">
+  <div class="modalcard">
+    <h3 id="mTitle">Run this with your AI assistant</h3>
+    <p id="mMsg">The live assistant isn't reachable from here — two quick steps and the result drops straight into the canvas, no retyping.</p>
+    <p class="lbl" style="margin:2px 0 7px">1 · Copy this prompt</p>
+    <pre id="mPrompt"></pre>
+    <div class="row" style="margin-top:10px">
+      <button class="btn" id="mCopy">Copy prompt</button>
+      <a class="btn ghost" href="https://claude.ai/new" target="_blank" rel="noopener">Open Claude ↗</a>
+    </div>
+    <p class="lbl" style="margin:16px 0 7px">2 · Paste the result back</p>
+    <textarea id="mResult" placeholder="Paste exactly what the assistant gave you here…" style="min-height:130px"></textarea>
+    <div class="modalrow">
+      <button class="btn ghost" id="mClose">Cancel</button>
+      <button class="btn solid" id="mApply">Apply to canvas</button>
+    </div>
+  </div>
+</div>
+<div class="toast" id="toast"></div>
+
+<script>
+"use strict";
+/* ===================== STATE ===================== */
+var BLANK = {
+  job:{notes:"",situation:"",motivation:"",outcome:"",functional:"",emotional:"",social:"",contenders:""},
+  forces:{push:"",pull:"",anxiety:"",habit:""},
+  outcomes:[],            // {text, imp, sat}
+  target:{chosen:"",gateOn:false,who:""},
+  interview:{guide:""}
+};
+var S = load() || JSON.parse(JSON.stringify(BLANK));
+var cur=0, maxReached=0;
+function persist(){ try{ localStorage.setItem("jtbd", JSON.stringify(S)); }catch(e){} mark(); }
+function load(){ try{ var r=localStorage.getItem("jtbd"); return r?JSON.parse(r):null; }catch(e){ return null; } }
+function mark(){ var el=document.getElementById("saveState"); if(el) el.textContent="Saved "+new Date().toLocaleTimeString([], {hour:'2-digit',minute:'2-digit'})+" · use Save to keep a file"; }
+
+/* ===================== AI CORE (shared pattern) ===================== */
+async function askClaude(prompt, wantJson){
+  var res = await fetch("https://api.anthropic.com/v1/messages",{
+    method:"POST", headers:{"Content-Type":"application/json"},
+    body:JSON.stringify({model:"claude-sonnet-4-6", max_tokens:1100, messages:[{role:"user", content:prompt}]})
+  });
+  if(!res.ok) throw new Error("status "+res.status);
+  var data = await res.json();
+  var text=(data.content||[]).filter(function(b){return b.type==="text";}).map(function(b){return b.text;}).join("\n").trim();
+  if(!text) throw new Error("empty");
+  if(wantJson){ var clean=text.replace(/```json/gi,"").replace(/```/g,"").trim(); var m=clean.match(/[\[{][\s\S]*[\]}]/); return JSON.parse(m?m[0]:clean); }
+  return text;
+}
+async function runAI(btn, prompt, wantJson, onResult){
+  btn.classList.add("busy"); btn.disabled=true;
+  try{ var out=await askClaude(prompt,wantJson); onResult(out); persist(); render(); toast("Drafted — now make it yours"); }
+  catch(e){ openFallback(prompt, wantJson, onResult); }
+  finally{ btn.classList.remove("busy"); btn.disabled=false; }
+}
+var fbState={wantJson:false,onResult:null};
+function openFallback(prompt,wantJson,onResult){
+  fbState={wantJson:wantJson,onResult:onResult};
+  document.getElementById("mPrompt").textContent=prompt+(wantJson?"\n\n(Return only the JSON described above.)":"");
+  document.getElementById("mResult").value=""; document.getElementById("modal").classList.add("show");
+}
+function closeFallback(){ document.getElementById("modal").classList.remove("show"); document.getElementById("mResult").value=""; }
+document.getElementById("mClose").onclick=closeFallback;
+document.getElementById("mCopy").onclick=function(){ navigator.clipboard.writeText(document.getElementById("mPrompt").textContent).then(function(){ toast("Prompt copied"); }); };
+document.getElementById("mApply").onclick=function(){
+  var raw=document.getElementById("mResult").value.trim(); if(!raw){ toast("Paste the assistant's result first"); return; }
+  try{ var out; if(fbState.wantJson){ var clean=raw.replace(/```json/gi,"").replace(/```/g,"").trim(); var m=clean.match(/[\[{][\s\S]*[\]}]/); out=JSON.parse(m?m[0]:clean); } else out=raw;
+    fbState.onResult(out); persist(); render(); closeFallback(); toast("Applied — now make it yours");
+  }catch(e){ toast("Couldn't read that — paste the full result and try again"); }
+};
+
+/* ===================== HELPERS ===================== */
+function el(h){ var t=document.createElement("template"); t.innerHTML=h.trim(); return t.content.firstChild; }
+function bind(id,obj,key,ev){ var n=document.getElementById(id); if(!n)return; n.value=obj[key]||""; n.addEventListener(ev||"input",function(){ obj[key]=n.value; persist(); if(id.indexOf("j_")===0) refreshJobline(); }); }
+function toast(m){ var t=document.getElementById("toast"); t.textContent=m; t.classList.add("show"); clearTimeout(t._t); t._t=setTimeout(function(){ t.classList.remove("show"); },1900); }
+function esc(s){ return (s||"").replace(/&/g,"&amp;").replace(/</g,"&lt;").replace(/>/g,"&gt;"); }
+function oppScore(o){ return (+o.imp||0) + Math.max((+o.imp||0)-(+o.sat||0),0); }
+
+/* ===================== RENDER ===================== */
+var STAGES=[renderJob, renderForces, renderOpportunities, renderInterview];
+function render(){
+  document.querySelectorAll(".step").forEach(function(s){ var i=+s.dataset.i; s.classList.toggle("active",i===cur); s.classList.toggle("done", i<cur); });
+  var track=document.getElementById("steptrack"), fill=document.getElementById("stepfill"); var w=track.clientWidth-10, seg=w/4;
+  fill.style.left=(5+cur*seg)+"px"; fill.style.width=seg+"px";
+  var host=document.getElementById("stageHost"); host.innerHTML=""; host.appendChild(STAGES[cur]()); host.appendChild(navRow());
+  window.scrollTo({top:0,behavior:"smooth"});
+}
+function navRow(){
+  var n=el('<div class="navbtns"></div>'); var b=el('<button class="btn">‹ Back</button>'); var x=el('<button class="btn solid">Next ›</button>');
+  b.style.visibility=cur===0?"hidden":"visible"; x.style.visibility=cur===3?"hidden":"visible";
+  b.onclick=function(){ cur=Math.max(0,cur-1); render(); }; x.onclick=function(){ cur=Math.min(3,cur+1); maxReached=Math.max(maxReached,cur); render(); };
+  n.appendChild(b); n.appendChild(x); return n;
+}
+function head(ix,t,sub){ return '<div class="stagehead"><span class="ix">'+ix+'</span><h2>'+t+'</h2></div><p class="stagesub">'+sub+'</p>'; }
+function augband(ai,hu,ga){ return '<div class="augband"><div class="augpill ai"><b>Above the line · AI</b>'+ai+'</div><div class="augpill hu"><b>Below the line · you</b>'+hu+'</div>'+(ga?'<div class="augpill ga"><b>Gate · sign-off</b>'+ga+'</div>':'')+'</div>'; }
+
+/* ---------- STAGE 1: THE JOB ---------- */
+function renderJob(){
+  var J=S.job; var wrap=el('<section class="stage"></section>');
+  wrap.innerHTML=head("Stage 1 / 4","Define the job",
+    "Strip the product away and name the progress the customer is trying to make. Paste your research; AI drafts the job and its functional, emotional and social dimensions; you make sure it's the real job, not a feature wish.")
+    +augband("Mines behaviour and verbatims to draft the core job statement.","Checks it's the job, not a solution in disguise; names what they 'hire' today.","");
+  var body=el('<div class="grid g2"></div>');
+  var left=el('<div class="col"></div>');
+  left.appendChild(el('<div class="panel aizone"><p class="lbl"><span class="tagmini ai">AI</span> Research notes</p>'
+    +'<p class="hint">Interview verbatims, switch stories, observations — the moments people reached for a solution.</p>'
+    +'<textarea class="note" id="j_notes" placeholder="e.g. \'I started keeping a paper list because the app buried the one number I check every morning…\'"></textarea>'
+    +'<button class="aibtn" data-label="Draft the job" id="j_draft">✦ Draft the job &amp; dimensions</button></div>'));
+  left.appendChild(el('<div class="panel huzone"><p class="lbl"><span class="tagmini hu">YOU</span> What do they hire today?</p>'
+    +'<p class="hint">The real competition is everything — including a spreadsheet, a habit, or doing nothing.</p>'
+    +'<textarea class="sm" id="j_contenders" placeholder="The current ‘hires’ for this job…"></textarea></div>'));
+  body.appendChild(left);
+  var right=el('<div class="col"></div>');
+  right.appendChild(el('<div class="panel"><p class="lbl">The job statement</p><div id="joblineHost"></div>'
+    +'<div class="dims">'
+    +'<div class="dim"><p class="lbl">Functional</p><textarea class="sm" id="j_functional" placeholder="The practical task"></textarea></div>'
+    +'<div class="dim"><p class="lbl">Emotional</p><textarea class="sm" id="j_emotional" placeholder="How they want to feel"></textarea></div>'
+    +'<div class="dim"><p class="lbl">Social</p><textarea class="sm" id="j_social" placeholder="How they want to be seen"></textarea></div>'
+    +'</div></div>'));
+  body.appendChild(right);
+  wrap.appendChild(body);
+  setTimeout(function(){
+    bind("j_notes",J,"notes"); bind("j_contenders",J,"contenders");
+    bind("j_functional",J,"functional"); bind("j_emotional",J,"emotional"); bind("j_social",J,"social");
+    refreshJobline();
+    document.getElementById("j_draft").onclick=function(){
+      if(!J.notes.trim()){ toast("Add some research notes first"); return; }
+      runAI(this,"From these research notes, write a Jobs-to-be-Done job statement (solution-agnostic) and its dimensions.\n\nNOTES:\n"+J.notes
+        +"\n\nReturn ONLY JSON {\"situation\":\"\",\"motivation\":\"\",\"outcome\":\"\",\"functional\":\"\",\"emotional\":\"\",\"social\":\"\",\"contenders\":\"\"}. "
+        +"situation/motivation/outcome complete the sentence: When [situation], I want to [motivation], so I can [outcome].",
+        true,function(o){ J.situation=o.situation||"";J.motivation=o.motivation||"";J.outcome=o.outcome||"";
+          J.functional=o.functional||"";J.emotional=o.emotional||"";J.social=o.social||"";J.contenders=o.contenders||J.contenders; });
+    };
+  },0);
+  return wrap;
+}
+function refreshJobline(){
+  var host=document.getElementById("joblineHost"); if(!host) return; var J=S.job;
+  host.innerHTML='<div class="jobline">When <b id="jl_s">'+esc(J.situation||"…")+'</b>, I want to <b id="jl_m">'+esc(J.motivation||"…")+'</b>, so I can <b id="jl_o">'+esc(J.outcome||"…")+'</b>.'
+    +'<div class="row" style="margin-top:12px">'
+    +'<input type="text" id="je_s" placeholder="situation" value="'+esc(J.situation)+'" style="flex:1 1 30%">'
+    +'<input type="text" id="je_m" placeholder="motivation" value="'+esc(J.motivation)+'" style="flex:1 1 30%">'
+    +'<input type="text" id="je_o" placeholder="outcome" value="'+esc(J.outcome)+'" style="flex:1 1 30%"></div></div>';
+  ["s","m","o"].forEach(function(k){ var map={s:"situation",m:"motivation",o:"outcome"}; var inp=document.getElementById("je_"+k);
+    if(inp) inp.addEventListener("input",function(){ J[map[k]]=inp.value; var disp=document.getElementById("jl_"+k); if(disp) disp.textContent=inp.value||"…"; persist(); }); });
+}
+
+/* ---------- STAGE 2: FORCES ---------- */
+function renderForces(){
+  var F=S.forces, J=S.job; var wrap=el('<section class="stage"></section>');
+  wrap.innerHTML=head("Stage 2 / 4","Forces of progress",
+    "Switching is a tug-of-war. Two forces pull people toward a new solution; two hold them to the old one. Get these right and you know what to amplify and what to defuse.")
+    +augband("Drafts the four forces from the switch stories in your notes.","Reads which force is truly decisive — usually it's an anxiety nobody names.","");
+  wrap.appendChild(el('<div class="row" style="margin:0 0 14px"><button class="aibtn" data-label="Map the four forces" id="f_map">✦ Map the four forces from notes</button></div>'));
+  var grid=el('<div class="forces"></div>');
+  var defs=[["push","toward","↑","Push of the situation","What makes the old way painful"],
+            ["pull","toward","→","Pull of the new","What attracts them to a better way"],
+            ["anxiety","against","⚠","Anxiety of the new","Fear of the switch — cost, risk, learning"],
+            ["habit","against","⏚","Habit of the present","The comfortable pull of what they know"]];
+  defs.forEach(function(d){
+    grid.appendChild(el('<div class="force '+d[1]+'"><p class="ttl"><span class="arrow">'+d[2]+'</span>'+d[3]+'</p><p class="sub">'+d[4]+'</p>'
+      +'<textarea class="sm" id="f_'+d[0]+'"></textarea></div>'));
+  });
+  wrap.appendChild(grid);
+  setTimeout(function(){
+    ["push","pull","anxiety","habit"].forEach(function(k){ bind("f_"+k,F,k); });
+    document.getElementById("f_map").onclick=function(){
+      var ctx=J.notes||""; if(!ctx.trim()){ toast("Add notes in Stage 1 first"); return; }
+      runAI(this,"From these notes about people switching solutions, map the four forces of progress.\n\nNOTES:\n"+ctx
+        +"\nJOB: When "+(J.situation||"")+", they want to "+(J.motivation||"")+", so they can "+(J.outcome||"")
+        +"\n\nReturn ONLY JSON {\"push\":\"\",\"pull\":\"\",\"anxiety\":\"\",\"habit\":\"\"}. Each a short paragraph grounded in the notes.",
+        true,function(o){ F.push=o.push||"";F.pull=o.pull||"";F.anxiety=o.anxiety||"";F.habit=o.habit||""; });
+    };
+  },0);
+  return wrap;
+}
+
+/* ---------- STAGE 3: OPPORTUNITY SCORER ---------- */
+function renderOpportunities(){
+  var wrap=el('<section class="stage"></section>'); var T=S.target;
+  wrap.innerHTML=head("Stage 3 / 4","Score the opportunities",
+    "List the outcomes people want from this job, then rate each on how important it is and how satisfied they are today. Where importance outruns satisfaction, you've found an opportunity. The score does the ranking; you choose the one to build for.")
+    +augband("Generates candidate desired outcomes from the job to get you started.","Sets importance and satisfaction from real evidence, not optimism.","Confirms the one underserved need worth designing for, with a name attached.");
+  // scorer
+  var sc=el('<div class="panel"></div>');
+  sc.innerHTML='<div class="scorehead"><span class="ttl">Opportunity scorer</span><div class="sp">'
+    +'<button class="aibtn" data-label="Suggest outcomes" id="o_ai" style="margin:0">✦ Suggest desired outcomes</button>'
+    +'<button class="btn" id="o_add">+ Add outcome</button><button class="btn" id="o_sort">Sort by opportunity</button></div></div>'
+    +'<div class="ohdr"><span>Desired outcome</span><span>Importance</span><span>Satisfaction</span><span>Opportunity</span><span></span></div>'
+    +'<div class="otable" id="otable"></div>'
+    +'<p class="scorekey">Opportunity = Importance + (Importance − Satisfaction, if positive). 10+ is an opportunity; 12+ is strongly underserved.</p>';
+  wrap.appendChild(sc);
+  // gate
+  wrap.appendChild(el('<div class="panel gazone" style="margin-top:16px"><p class="lbl"><span class="tagmini ga">GATE</span> The need we will build for</p>'
+    +'<p class="hint">Pick the underserved outcome you\'re committing to. Everything you design next serves this.</p>'
+    +'<textarea class="sm" id="o_chosen" placeholder="The unmet need we are solving…"></textarea>'
+    +'<div class="gatecard" style="margin-top:12px"><div class="check" id="o_check"></div><div><strong style="font-family:var(--display)">I confirm this is the underserved need worth building for.</strong>'
+    +'<div style="margin-top:8px"><input type="text" id="o_who" placeholder="Signed off by — name, role"></div></div></div></div>'));
+  setTimeout(function(){
+    renderOutcomes();
+    bind("o_chosen",T,"chosen"); bind("o_who",T,"who");
+    var chk=document.getElementById("o_check"); chk.classList.toggle("on",T.gateOn); chk.innerHTML=T.gateOn?"✓":"";
+    chk.onclick=function(){ T.gateOn=!T.gateOn; chk.classList.toggle("on",T.gateOn); chk.innerHTML=T.gateOn?"✓":""; persist(); if(T.gateOn) toast("Target need signed off"); };
+    document.getElementById("o_add").onclick=function(){ S.outcomes.push({text:"",imp:5,sat:5}); persist(); renderOutcomes(); };
+    document.getElementById("o_sort").onclick=function(){ S.outcomes.sort(function(a,b){ return oppScore(b)-oppScore(a); }); persist(); renderOutcomes(); toast("Ranked by opportunity"); };
+    document.getElementById("o_ai").onclick=function(){
+      var J=S.job; var job="When "+(J.situation||"")+", want to "+(J.motivation||"")+", so I can "+(J.outcome||"");
+      if(!J.motivation){ toast("Define the job in Stage 1 first"); return; }
+      runAI(this,"For this job, list 8 desired outcomes customers measure success by (each phrased 'minimise/increase the [metric] when [context]').\n\nJOB: "+job
+        +"\n\nReturn ONLY JSON {\"outcomes\":[]}.",true,
+        function(o){ (o.outcomes||[]).forEach(function(t){ S.outcomes.push({text:t,imp:5,sat:5}); }); });
+    };
+  },0);
+  return wrap;
+}
+function renderOutcomes(){
+  var host=document.getElementById("otable"); if(!host) return;
+  if(!S.outcomes.length){ host.innerHTML='<p class="empty">No outcomes yet — add your own or let AI suggest a starting set.</p>'; return; }
+  var maxOpp=20; host.innerHTML="";
+  S.outcomes.forEach(function(o,idx){
+    var opp=oppScore(o); var hot=opp>=10;
+    var row=el('<div class="orow'+(hot?' hot':'')+'"></div>');
+    row.innerHTML='<input type="text" value="'+esc(o.text)+'" placeholder="desired outcome" data-k="text">'
+      +'<div class="sld"><input type="range" min="1" max="10" value="'+(o.imp||5)+'" data-k="imp"><span class="v">'+(o.imp||5)+'</span></div>'
+      +'<div class="sld"><input type="range" min="1" max="10" value="'+(o.sat||5)+'" data-k="sat"><span class="v">'+(o.sat||5)+'</span></div>'
+      +'<div class="opp"><div class="bar"><i style="width:'+Math.round(opp/maxOpp*100)+'%"></i></div><span class="num">'+opp+'</span>'+(hot?'<span class="hottag">OPP</span>':'')+'</div>'
+      +'<button class="del" title="remove">✕</button>';
+    row.querySelectorAll("input").forEach(function(inp){
+      var k=inp.dataset.k;
+      inp.addEventListener("input",function(){
+        if(k==="text"){ o.text=inp.value; persist(); }
+        else { o[k]=+inp.value; var v=inp.parentNode.querySelector(".v"); if(v) v.textContent=inp.value;
+          var opp2=oppScore(o); var r=inp.closest(".orow"); r.classList.toggle("hot",opp2>=10);
+          r.querySelector(".opp .num").textContent=opp2; r.querySelector(".opp .bar i").style.width=Math.round(opp2/maxOpp*100)+"%";
+          var tag=r.querySelector(".hottag"); if(opp2>=10 && !tag){ var sp=document.createElement("span"); sp.className="hottag"; sp.textContent="OPP"; r.querySelector(".opp").appendChild(sp);} if(opp2<10 && tag) tag.remove();
+          persist(); }
+      });
+    });
+    row.querySelector(".del").onclick=function(){ S.outcomes.splice(idx,1); persist(); renderOutcomes(); };
+    host.appendChild(row);
+  });
+}
+
+/* ---------- STAGE 4: SWITCH INTERVIEW ---------- */
+function renderInterview(){
+  var I=S.interview, J=S.job; var wrap=el('<section class="stage"></section>');
+  wrap.innerHTML=head("Stage 4 / 4","Switch interview",
+    "Now go and validate. The switch interview reconstructs the timeline of a real decision — the moment the old way broke, the search, the hesitation, the first hire. AI drafts the guide; you run it like a detective, following the energy.")
+    +augband("Drafts a timeline-based switch-interview guide tuned to this job.","Runs it live — listens for the pause, the workaround, the thing they downplay.","");
+  var body=el('<div class="grid g2"></div>');
+  body.appendChild(el('<div class="panel aizone"><p class="lbl"><span class="tagmini ai">AI</span> Generate the guide</p>'
+    +'<button class="aibtn" data-label="Draft interview guide" id="iv_draft">✦ Draft switch-interview guide</button>'
+    +'<textarea class="note" id="iv_guide" style="margin-top:12px;min-height:280px" placeholder="Your interview guide will appear here — editable."></textarea></div>'));
+  body.appendChild(el('<div class="panel huzone"><p class="lbl"><span class="tagmini hu">YOU</span> Run it like a detective</p>'
+    +'<p class="hint">A few principles the guide can\'t replace:</p>'
+    +'<div style="font-family:var(--body);font-size:14.5px;line-height:1.6;color:var(--ink-2)">'
+    +'<p style="margin:0 0 10px">• Anchor on a <strong>real, recent switch</strong>, not opinions about the category.</p>'
+    +'<p style="margin:0 0 10px">• Rebuild the <strong>timeline</strong>: first thought → passive looking → active looking → deciding → first use.</p>'
+    +'<p style="margin:0 0 10px">• When they hesitate, <strong>slow down</strong> — the hesitation is the data.</p>'
+    +'<p style="margin:0">• Ask what they <strong>fired</strong>, and what nearly stopped them buying.</p></div></div>'));
+  wrap.appendChild(body);
+  setTimeout(function(){
+    bind("iv_guide",I,"guide");
+    document.getElementById("iv_draft").onclick=function(){
+      var job="When "+(J.situation||"")+", want to "+(J.motivation||"")+", so I can "+(J.outcome||"");
+      runAI(this,"Write a Jobs-to-be-Done switch interview guide for this job. Reconstruct the buying timeline (first thought, passive looking, active looking, deciding, first use) and probe the four forces.\n\nJOB: "+job
+        +"\n\nReturn plain text: a short intro, then 10-14 sequenced questions grouped by timeline stage.",false,
+        function(o){ I.guide=o; });
+    };
+  },0);
+  return wrap;
+}
+
+/* ===================== TOOLBAR ===================== */
+document.getElementById("saveBtn").onclick=function(){ var b=new Blob([JSON.stringify(S,null,2)],{type:"application/json"}); var a=document.createElement("a"); a.href=URL.createObjectURL(b); a.download="jobs-to-be-done.json"; a.click(); toast("Saved to file"); };
+document.getElementById("loadBtn").onclick=function(){ document.getElementById("fileIn").click(); };
+document.getElementById("fileIn").onchange=function(e){ var f=e.target.files[0]; if(!f)return; var r=new FileReader(); r.onload=function(){ try{ S=JSON.parse(r.result); persist(); cur=0; render(); toast("Loaded"); }catch(err){ toast("Couldn't read that file"); } }; r.readAsText(f); };
+document.getElementById("printBtn").onclick=function(){ window.print(); };
+document.getElementById("resetBtn").onclick=function(){ if(confirm("Clear the whole toolset and start fresh?")){ S=JSON.parse(JSON.stringify(BLANK)); persist(); cur=0; maxReached=0; render(); } };
+document.querySelectorAll(".step").forEach(function(s){ s.onclick=function(){ cur=+s.dataset.i; maxReached=Math.max(maxReached,cur); render(); }; });
+window.addEventListener("resize",function(){ var t=document.getElementById("steptrack"),f=document.getElementById("stepfill"); if(t&&f){ var w=t.clientWidth-10,seg=w/4; f.style.left=(5+cur*seg)+"px"; f.style.width=seg+"px"; } });
+render();
+</script>
+</body>
+</html>

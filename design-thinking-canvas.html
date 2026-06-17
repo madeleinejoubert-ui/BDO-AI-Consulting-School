@@ -1,0 +1,723 @@
+<!DOCTYPE html>
+<html lang="en-GB">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Design Thinking Canvas — an augmented working tool</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Archivo:wght@500;600;700;800&family=Newsreader:ital,opsz,wght@0,6..72,400;0,6..72,500;0,6..72,600;1,6..72,400&family=IBM+Plex+Mono:wght@400;500;600&display=swap" rel="stylesheet">
+<style>
+  :root{
+    --ink:#1b1a2e; --ink-2:#3a3852;
+    --paper:#f7f8fc; --paper-2:#ecedf6; --card:#ffffff;
+    --ai:#2f6bff;   --ai-soft:#e1eaff;   --ai-line:#a9c2ff;   --ai-ink:#1a48b8;
+    --human:#ef8a17;--human-soft:#ffe9cf;--human-line:#ffc684;--human-ink:#9a4e0d;
+    --gate:#e23744; --gate-soft:#ffe0e2; --gate-line:#f3aeb4;
+    --pop:#7c4dff;  --green:#1f9d57;
+    --line:#e6e4f1; --line-2:#d3cfe6; --muted:#67637e;
+    --display:'Archivo',system-ui,sans-serif;
+    --body:'Newsreader',Georgia,serif;
+    --mono:'IBM Plex Mono',ui-monospace,monospace;
+    --rainbow:linear-gradient(90deg,#7c4dff,#2f6bff,#12b3a6,#ef8a17,#e23744);
+  }
+  *{box-sizing:border-box}
+  html{scroll-behavior:smooth}
+  body{margin:0;font-family:var(--body);background:var(--paper);color:var(--ink);
+     font-size:16px;line-height:1.5;-webkit-font-smoothing:antialiased}
+  h1,h2,h3,h4,.lbl,.eyebrow,button,.step,.chip,.tag,input,select,textarea{font-family:var(--display)}
+  button{cursor:pointer}
+  textarea,input{font-family:var(--mono)}
+
+  /* ---------- top bar ---------- */
+  .topbar{position:sticky;top:0;z-index:60;background:rgba(247,248,252,.9);backdrop-filter:blur(8px);
+     border-bottom:1px solid var(--line)}
+  .topbar .wrap{max-width:1180px;margin:0 auto;padding:11px 20px;display:flex;align-items:center;gap:14px;flex-wrap:wrap}
+  .brand{display:flex;align-items:center;gap:11px;font-family:var(--display);font-weight:800;font-size:15px;letter-spacing:-.01em}
+  .brand .dot{width:24px;height:24px;border-radius:50%;background:conic-gradient(from 130deg,#7c4dff,#2f6bff,#12b3a6,#ef8a17,#e23744,#7c4dff);
+     box-shadow:inset 0 0 0 4px var(--paper),inset 0 0 0 5px var(--line-2)}
+  .brand small{display:block;font-weight:600;font-size:10px;letter-spacing:.16em;color:var(--muted);text-transform:uppercase}
+  .topbar .tools{margin-left:auto;display:flex;gap:7px;flex-wrap:wrap}
+  .btn{border:1px solid var(--line-2);background:var(--card);color:var(--ink);font-weight:600;font-size:12.5px;
+     padding:7px 12px;border-radius:8px;display:inline-flex;align-items:center;gap:6px}
+  .btn:hover{background:var(--paper-2)}
+  .btn.ghost{border-color:transparent;background:transparent;color:var(--muted)}
+  .btn.solid{background:var(--pop);border-color:var(--pop);color:#fff}
+  .btn.solid:hover{filter:brightness(1.06)}
+
+  /* ---------- hero / stepper ---------- */
+  .hero{max-width:1180px;margin:0 auto;padding:26px 20px 6px}
+  .hero h1{font-weight:800;letter-spacing:-.02em;font-size:clamp(1.6rem,3.6vw,2.3rem);line-height:1.04;margin:0 0 8px}
+  .hero h1 .g{background:var(--rainbow);-webkit-background-clip:text;background-clip:text;color:transparent;-webkit-text-fill-color:transparent}
+  .hero p{max-width:70ch;color:var(--ink-2);margin:0 0 4px}
+  .legend{display:flex;gap:16px;flex-wrap:wrap;margin:14px 0 2px;font-family:var(--display);font-size:12px;font-weight:600}
+  .legend span{display:inline-flex;align-items:center;gap:7px;color:var(--ink-2)}
+  .legend i{width:22px;height:12px;border-radius:4px;display:inline-block}
+  .legend .iai{background:var(--ai-soft);border:1px solid var(--ai-line)}
+  .legend .ihu{background:var(--human-soft);border:1px solid var(--human-line)}
+  .legend .iga{background:var(--gate-soft);border:1px solid var(--gate-line)}
+
+  .stepper{max-width:1180px;margin:18px auto 0;padding:0 20px;position:relative}
+  .steptrack{position:relative;display:flex;gap:0;border-radius:999px;background:var(--paper-2);padding:5px;overflow:hidden}
+  .step{flex:1 1 0;position:relative;z-index:2;border:none;background:transparent;border-radius:999px;
+     padding:10px 6px;text-align:center;font-weight:700;font-size:12.5px;color:var(--muted);letter-spacing:-.01em;
+     display:flex;flex-direction:column;align-items:center;gap:3px;transition:color .2s}
+  .step .n{width:22px;height:22px;border-radius:50%;background:var(--card);border:2px solid var(--line-2);
+     display:flex;align-items:center;justify-content:center;font-size:11px;color:var(--muted)}
+  .step.active{color:#fff}
+  .step.active .n{background:#fff;border-color:#fff;color:var(--pop)}
+  .step.done .n{background:var(--pop);border-color:var(--pop);color:#fff}
+  .stepfill{position:absolute;top:5px;bottom:5px;border-radius:999px;background:var(--rainbow);
+     transition:left .28s cubic-bezier(.4,0,.2,1),width .28s cubic-bezier(.4,0,.2,1);z-index:1}
+
+  /* ---------- stage panel ---------- */
+  .stage{max-width:1180px;margin:22px auto 40px;padding:0 20px}
+  .stagehead{display:flex;align-items:baseline;gap:12px;margin:0 0 4px;flex-wrap:wrap}
+  .stagehead h2{font-size:clamp(1.3rem,2.6vw,1.7rem);font-weight:800;letter-spacing:-.02em;margin:0}
+  .stagehead .ix{font-family:var(--mono);font-size:12px;color:var(--pop);font-weight:600}
+  .stagesub{color:var(--ink-2);max-width:74ch;margin:0 0 18px}
+
+  .augband{display:flex;gap:10px;flex-wrap:wrap;margin:0 0 20px}
+  .augpill{font-family:var(--mono);font-size:11.5px;border-radius:9px;padding:8px 12px;line-height:1.35;flex:1 1 220px}
+  .augpill b{font-family:var(--display);font-size:10px;letter-spacing:.07em;text-transform:uppercase;display:block;margin:0 0 3px}
+  .augpill.ai{background:var(--ai-soft);border:1px solid var(--ai-line);color:var(--ai-ink)}
+  .augpill.hu{background:var(--human-soft);border:1px solid var(--human-line);color:var(--human-ink)}
+  .augpill.ga{background:var(--gate-soft);border:1px solid var(--gate-line);color:var(--gate)}
+
+  .grid{display:grid;gap:16px}
+  .g2{grid-template-columns:1fr 1fr}
+  .g3{grid-template-columns:1fr 1fr 1fr}
+  .col{display:flex;flex-direction:column;gap:16px}
+
+  .panel{background:var(--card);border:1px solid var(--line);border-radius:14px;padding:16px}
+  .panel.aizone{border-color:var(--ai-line);background:linear-gradient(180deg,var(--ai-soft),var(--card) 60%)}
+  .panel.huzone{border-color:var(--human-line);background:linear-gradient(180deg,var(--human-soft),var(--card) 60%)}
+  .panel.gazone{border-color:var(--gate-line);background:linear-gradient(180deg,var(--gate-soft),var(--card) 60%)}
+  .lbl{font-weight:700;font-size:12.5px;letter-spacing:.02em;text-transform:uppercase;margin:0 0 9px;display:flex;align-items:center;gap:8px}
+  .lbl .tagmini{font-size:9.5px;font-weight:700;letter-spacing:.06em;padding:2px 6px;border-radius:5px;color:#fff}
+  .tagmini.ai{background:var(--ai)} .tagmini.hu{background:var(--human)} .tagmini.ga{background:var(--gate)}
+  .hint{font-family:var(--body);font-size:13.5px;color:var(--muted);margin:0 0 10px}
+
+  textarea,input[type=text]{width:100%;border:1px solid var(--line-2);border-radius:9px;padding:10px 11px;
+     font-size:13px;line-height:1.5;color:var(--ink);background:var(--paper);resize:vertical}
+  textarea:focus,input:focus{outline:2px solid var(--pop);outline-offset:1px;border-color:transparent}
+  textarea.note{min-height:120px}
+  textarea.sm{min-height:64px}
+
+  .aibtn{background:var(--ai);border:1px solid var(--ai);color:#fff;font-weight:700;font-size:12.5px;
+     padding:8px 13px;border-radius:9px;display:inline-flex;align-items:center;gap:7px;margin:10px 8px 0 0}
+  .aibtn:hover{filter:brightness(1.06)}
+  .aibtn:disabled{opacity:.55;cursor:wait}
+  .aibtn .spark{font-size:13px}
+  .aibtn.busy .spark{animation:spin 1s linear infinite;display:inline-block}
+  @keyframes spin{to{transform:rotate(360deg)}}
+
+  .emap{display:grid;grid-template-columns:1fr 1fr;gap:12px}
+  .quad .lbl{margin-bottom:6px}
+  .quad textarea{min-height:84px}
+  .q-says .lbl{color:#1a48b8}.q-thinks .lbl{color:#6a3fb5}
+  .q-does .lbl{color:#0f8f7f}.q-feels .lbl{color:#b5601a}
+  .q-pains .lbl{color:var(--gate)}.q-gains .lbl{color:var(--green)}
+
+  .persona{border:1px dashed var(--line-2);border-radius:12px;padding:14px;background:var(--paper-2)}
+  .persona h4{margin:0 0 2px;font-size:16px}
+  .persona .role{font-family:var(--mono);font-size:11.5px;color:var(--pop);margin:0 0 10px}
+  .persona .quote{font-family:var(--body);font-style:italic;font-size:15px;color:var(--ink-2);
+     border-left:3px solid var(--pop);padding:2px 0 2px 12px;margin:10px 0 0}
+
+  .chips{display:flex;flex-wrap:wrap;gap:8px;margin:6px 0 0}
+  .chip{background:var(--paper-2);border:1px solid var(--line-2);border-radius:999px;padding:6px 11px;
+     font-size:12.5px;font-weight:600;color:var(--ink-2);cursor:pointer}
+  .chip:hover{border-color:var(--pop);color:var(--ink)}
+  .chip.sel{background:var(--pop);border-color:var(--pop);color:#fff}
+
+  .gatecard{display:flex;gap:12px;align-items:flex-start}
+  .gatecard .check{flex:none;width:22px;height:22px;border-radius:6px;border:2px solid var(--gate-line);
+     background:var(--card);display:flex;align-items:center;justify-content:center;cursor:pointer;margin-top:2px}
+  .gatecard .check.on{background:var(--gate);border-color:var(--gate);color:#fff}
+  .gatecard .who{margin-top:8px}
+
+  .empty{font-family:var(--body);color:var(--muted);font-size:13.5px;font-style:italic}
+  .row{display:flex;gap:8px;align-items:center;flex-wrap:wrap}
+
+  /* fallback modal */
+  .modal{position:fixed;inset:0;background:rgba(20,20,40,.5);z-index:100;display:none;align-items:center;justify-content:center;padding:20px}
+  .modal.show{display:flex}
+  .modalcard{background:var(--card);border-radius:16px;max-width:640px;width:100%;padding:22px;max-height:86vh;overflow:auto;border:1px solid var(--line)}
+  .modalcard h3{margin:0 0 6px;font-size:18px}
+  .modalcard p{font-size:14px;color:var(--ink-2);margin:0 0 12px}
+  .modalcard pre{background:#11131c;color:#e8eef0;border-radius:10px;padding:14px;font-family:var(--mono);
+     font-size:12px;line-height:1.5;white-space:pre-wrap;word-break:break-word;max-height:46vh;overflow:auto}
+  .modalrow{display:flex;gap:8px;justify-content:flex-end;margin-top:14px;flex-wrap:wrap}
+
+  .toast{position:fixed;left:50%;bottom:24px;transform:translateX(-50%) translateY(20px);background:var(--ink);color:#fff;
+     padding:11px 18px;border-radius:10px;font-family:var(--display);font-weight:600;font-size:13px;opacity:0;
+     transition:opacity .25s,transform .25s;z-index:120;pointer-events:none}
+  .toast.show{opacity:1;transform:translateX(-50%) translateY(0)}
+
+  .footer{max-width:1180px;margin:0 auto;padding:18px 20px 40px;color:var(--muted);font-family:var(--mono);font-size:11.5px;
+     border-top:1px solid var(--line);display:flex;justify-content:space-between;gap:12px;flex-wrap:wrap}
+
+  .navbtns{display:flex;justify-content:space-between;gap:12px;margin:24px 0 0}
+
+  @media (max-width:820px){
+    .g2,.g3{grid-template-columns:1fr}
+    .emap{grid-template-columns:1fr}
+    .step .lbltext{display:none}
+    .step{font-size:0}
+    .augpill{flex-basis:100%}
+  }
+  @media (prefers-reduced-motion:reduce){*{animation-duration:.001ms!important;transition-duration:.001ms!important}}
+  @media print{
+    .topbar,.stepper,.aibtn,.navbtns,.augband,.btn,.modal,.toast{display:none!important}
+    .stage{display:block!important;page-break-after:always}
+    body{background:#fff}
+  }
+</style>
+</head>
+<body>
+
+<div class="topbar">
+  <div class="wrap">
+    <div class="brand"><span class="dot"></span>
+      <span>Design Thinking Canvas<small>An augmented working tool</small></span>
+    </div>
+    <div class="tools">
+      <button class="btn" id="saveBtn">⭳ Save</button>
+      <button class="btn" id="loadBtn">⭱ Load</button>
+      <button class="btn" id="printBtn">⎙ Export</button>
+      <button class="btn ghost" id="resetBtn">Reset</button>
+      <input type="file" id="fileIn" accept="application/json" hidden>
+    </div>
+  </div>
+</div>
+
+<div class="hero">
+  <h1>The machine drafts. <span class="g">You bring the empathy.</span></h1>
+  <p>A working canvas for a Design Thinking engagement — Empathise, Define, Ideate, Prototype, Test.
+     At every stage, AI does the heavy lifting above the line; you do the human read below it; and a gate marks
+     where nothing proceeds without a real person's judgement.</p>
+  <div class="legend">
+    <span><i class="iai"></i>AI drafts for you</span>
+    <span><i class="ihu"></i>The judgement that stays human</span>
+    <span><i class="iga"></i>Sign-off gate</span>
+  </div>
+</div>
+
+<div class="stepper">
+  <div class="steptrack" id="steptrack">
+    <div class="stepfill" id="stepfill"></div>
+    <button class="step" data-i="0"><span class="n">1</span><span class="lbltext">Empathise</span></button>
+    <button class="step" data-i="1"><span class="n">2</span><span class="lbltext">Define</span></button>
+    <button class="step" data-i="2"><span class="n">3</span><span class="lbltext">Ideate</span></button>
+    <button class="step" data-i="3"><span class="n">4</span><span class="lbltext">Prototype</span></button>
+    <button class="step" data-i="4"><span class="n">5</span><span class="lbltext">Test</span></button>
+  </div>
+</div>
+
+<main id="stageHost"></main>
+
+<div class="footer">
+  <span id="saveState">Your work autosaves in this browser · use Save to keep a file</span>
+  <span>Original synthesis &amp; method curation © its author · methodologies referenced are their owners'</span>
+</div>
+
+<!-- fallback modal -->
+<div class="modal" id="modal">
+  <div class="modalcard">
+    <h3 id="mTitle">Run this with your AI assistant</h3>
+    <p id="mMsg">The live assistant isn't reachable from here — two quick steps and the result drops straight into the canvas, no retyping.</p>
+    <p class="lbl" style="margin:2px 0 7px">1 · Copy this prompt</p>
+    <pre id="mPrompt"></pre>
+    <div class="row" style="margin-top:10px">
+      <button class="btn" id="mCopy">Copy prompt</button>
+      <a class="btn ghost" href="https://claude.ai/new" target="_blank" rel="noopener">Open Claude ↗</a>
+    </div>
+    <p class="lbl" style="margin:16px 0 7px">2 · Paste the result back</p>
+    <textarea id="mResult" placeholder="Paste exactly what the assistant gave you here…" style="min-height:130px"></textarea>
+    <div class="modalrow">
+      <button class="btn ghost" id="mClose">Cancel</button>
+      <button class="btn solid" id="mApply">Apply to canvas</button>
+    </div>
+  </div>
+</div>
+
+<div class="toast" id="toast"></div>
+
+<script>
+"use strict";
+/* ============================================================= STATE */
+var BLANK = {
+  empathise:{notes:"",says:"",thinks:"",does:"",feels:"",pains:"",gains:"",
+             persona:null, humanRead:""},
+  define:{clusters:"", povs:[], chosenPov:"", gateOn:false, gateWho:""},
+  ideate:{hmw:[], chosenHmw:"", ideas:[], picks:[]},
+  prototype:{risky:"", why:"", proto:"", tests:"", decision:""},
+  test:{plan:"", feedback:"", synthesis:"", signal:""}
+};
+var S = load() || JSON.parse(JSON.stringify(BLANK));
+var cur = 0;
+var maxReached = 0;
+
+function persist(){ try{ localStorage.setItem("dtcanvas", JSON.stringify(S)); }catch(e){} mark(); }
+function load(){ try{ var r=localStorage.getItem("dtcanvas"); return r?JSON.parse(r):null; }catch(e){ return null; } }
+function mark(){ var el=document.getElementById("saveState"); if(el){ el.textContent="Saved "+new Date().toLocaleTimeString([], {hour:'2-digit',minute:'2-digit'})+" · use Save to keep a file"; } }
+
+/* ============================================================= AI CORE */
+async function askClaude(prompt, wantJson){
+  // tries the in-Claude endpoint; throws on failure so callers can fall back
+  var res = await fetch("https://api.anthropic.com/v1/messages",{
+    method:"POST", headers:{"Content-Type":"application/json"},
+    body:JSON.stringify({ model:"claude-sonnet-4-6", max_tokens:1100,
+      messages:[{role:"user", content:prompt}] })
+  });
+  if(!res.ok) throw new Error("status "+res.status);
+  var data = await res.json();
+  var text = (data.content||[]).filter(function(b){return b.type==="text";}).map(function(b){return b.text;}).join("\n").trim();
+  if(!text) throw new Error("empty");
+  if(wantJson){
+    var clean = text.replace(/```json/gi,"").replace(/```/g,"").trim();
+    var m = clean.match(/[\[{][\s\S]*[\]}]/);
+    return JSON.parse(m?m[0]:clean);
+  }
+  return text;
+}
+
+// Run an AI action with graceful fallback. onResult(parsed) applies it.
+async function runAI(btn, prompt, wantJson, onResult){
+  btn.classList.add("busy"); btn.disabled = true;
+  var prev = btn.dataset.label || btn.textContent;
+  try{
+    var out = await askClaude(prompt, wantJson);
+    onResult(out);
+    persist(); render();
+    toast("Drafted — now make it yours");
+  }catch(e){
+    openFallback(prompt, wantJson, onResult);
+  }finally{
+    btn.classList.remove("busy"); btn.disabled = false;
+  }
+}
+
+/* fallback modal: copy prompt + paste result back */
+var fbState = {wantJson:false, onResult:null};
+function openFallback(prompt, wantJson, onResult){
+  fbState = {wantJson:wantJson, onResult:onResult};
+  document.getElementById("mPrompt").textContent = prompt
+    + (wantJson ? "\n\n(Return only the JSON described above.)" : "");
+  document.getElementById("mResult").value = "";
+  document.getElementById("modal").classList.add("show");
+}
+function closeFallback(){ document.getElementById("modal").classList.remove("show"); document.getElementById("mResult").value=""; }
+document.getElementById("mClose").onclick = closeFallback;
+document.getElementById("mCopy").onclick = function(){
+  navigator.clipboard.writeText(document.getElementById("mPrompt").textContent)
+    .then(function(){ toast("Prompt copied"); });
+};
+document.getElementById("mApply").onclick = function(){
+  var raw = document.getElementById("mResult").value.trim();
+  if(!raw){ toast("Paste the assistant's result first"); return; }
+  try{
+    var out;
+    if(fbState.wantJson){
+      var clean = raw.replace(/```json/gi,"").replace(/```/g,"").trim();
+      var m = clean.match(/[\[{][\s\S]*[\]}]/);
+      out = JSON.parse(m ? m[0] : clean);
+    } else { out = raw; }
+    fbState.onResult(out);
+    persist(); render(); closeFallback();
+    toast("Applied — now make it yours");
+  }catch(e){
+    toast("Couldn't read that — paste the full result and try again");
+  }
+};
+
+/* ============================================================= HELPERS */
+function el(html){ var t=document.createElement("template"); t.innerHTML=html.trim(); return t.content.firstChild; }
+function bind(id, obj, key, ev){ var n=document.getElementById(id); if(!n)return;
+  n.value = obj[key]||""; n.addEventListener(ev||"input", function(){ obj[key]=n.value; persist(); }); }
+function toast(msg){ var t=document.getElementById("toast"); t.textContent=msg; t.classList.add("show");
+  clearTimeout(t._t); t._t=setTimeout(function(){ t.classList.remove("show"); }, 1900); }
+function esc(s){ return (s||"").replace(/&/g,"&amp;").replace(/</g,"&lt;").replace(/>/g,"&gt;"); }
+function listToText(a){ return (a||[]).map(function(x){return "• "+x;}).join("\n"); }
+
+/* ============================================================= STAGES */
+var STAGES = [renderEmpathise, renderDefine, renderIdeate, renderPrototype, renderTest];
+
+function render(){
+  // stepper
+  document.querySelectorAll(".step").forEach(function(s){
+    var i=+s.dataset.i; s.classList.toggle("active", i===cur); s.classList.toggle("done", i<cur || i<=maxReached && i!==cur && isDone(i));
+  });
+  var track=document.getElementById("steptrack"), fill=document.getElementById("stepfill");
+  var w = track.clientWidth-10, seg = w/5;
+  fill.style.left = (5+cur*seg)+"px"; fill.style.width = seg+"px";
+  // stage
+  var host=document.getElementById("stageHost"); host.innerHTML="";
+  host.appendChild(STAGES[cur]());
+  // nav
+  host.appendChild(navRow());
+  window.scrollTo({top:0, behavior:"smooth"});
+}
+function isDone(i){
+  if(i===0) return !!(S.empathise.says||S.empathise.persona);
+  if(i===1) return !!S.define.chosenPov && S.define.gateOn;
+  if(i===2) return S.ideate.picks.length>0;
+  if(i===3) return !!S.prototype.proto;
+  if(i===4) return !!S.test.synthesis;
+  return false;
+}
+function navRow(){
+  var n = el('<div class="navbtns"></div>');
+  var back = el('<button class="btn">‹ Back</button>');
+  var next = el('<button class="btn solid">Next ›</button>');
+  back.style.visibility = cur===0?"hidden":"visible";
+  next.style.visibility = cur===4?"hidden":"visible";
+  back.onclick=function(){ cur=Math.max(0,cur-1); render(); };
+  next.onclick=function(){ cur=Math.min(4,cur+1); maxReached=Math.max(maxReached,cur); render(); };
+  n.appendChild(back); n.appendChild(next);
+  return n;
+}
+
+function head(ix, title, sub){
+  return '<div class="stagehead"><span class="ix">'+ix+'</span><h2>'+title+'</h2></div>'
+       + '<p class="stagesub">'+sub+'</p>';
+}
+function augband(ai,hu,ga){
+  return '<div class="augband">'
+    +'<div class="augpill ai"><b>Above the line · AI</b>'+ai+'</div>'
+    +'<div class="augpill hu"><b>Below the line · you</b>'+hu+'</div>'
+    +(ga?'<div class="augpill ga"><b>Gate · sign-off</b>'+ga+'</div>':'')+'</div>';
+}
+
+/* ---------- STAGE 1: EMPATHISE ---------- */
+function renderEmpathise(){
+  var E=S.empathise;
+  var wrap=el('<section class="stage"></section>');
+  wrap.innerHTML = head("Stage 1 / 5","Empathise",
+    "Understand the real human you are designing for. Drop in your raw research, let AI structure it into an empathy map and persona, then add the read only you got from being in the room.")
+    + augband("Analyses interview notes &amp; reviews at scale; clusters them into Says / Thinks / Does / Feels.",
+              "Sat with real users. Heard the hesitation, the thing they wouldn't say, the body language.",
+              "");
+  var body = el('<div class="grid g2"></div>');
+
+  // left: notes + AI + human read
+  var left = el('<div class="col"></div>');
+  left.appendChild(el(
+    '<div class="panel aizone">'
+    +'<p class="lbl"><span class="tagmini ai">AI</span> Raw research notes</p>'
+    +'<p class="hint">Paste interview notes, observations, survey verbatims, support tickets — messy is fine.</p>'
+    +'<textarea class="note" id="e_notes" placeholder="e.g. P3 said she keeps three spreadsheets because she doesn\'t trust the dashboard... visibly frustrated when..."></textarea>'
+    +'<button class="aibtn" data-label="Draft empathy map" id="e_map"><span class="spark">✦</span> Draft empathy map</button>'
+    +'<button class="aibtn" data-label="Draft persona" id="e_persona"><span class="spark">✦</span> Draft persona</button>'
+    +'</div>'));
+  left.appendChild(el(
+    '<div class="panel huzone">'
+    +'<p class="lbl"><span class="tagmini hu">YOU</span> What the notes don\'t capture</p>'
+    +'<p class="hint">The human signal: tone, what they avoided, the workaround they were almost ashamed of. This is the part no model can see.</p>'
+    +'<textarea class="note" id="e_read" placeholder="What did you notice in the room that isn\'t in the transcript?"></textarea>'
+    +'</div>'));
+  body.appendChild(left);
+
+  // right: empathy map + persona
+  var right = el('<div class="col"></div>');
+  var map = el('<div class="panel"><p class="lbl">Empathy map</p><div class="emap" id="emapGrid"></div></div>');
+  var quads = [["says","Says","q-says"],["thinks","Thinks","q-thinks"],["does","Does","q-does"],
+               ["feels","Feels","q-feels"],["pains","Pains","q-pains"],["gains","Gains","q-gains"]];
+  var grid = map.querySelector("#emapGrid");
+  quads.forEach(function(q){
+    grid.appendChild(el('<div class="quad '+q[2]+'"><p class="lbl">'+q[1]+'</p>'
+      +'<textarea class="sm" id="e_'+q[0]+'"></textarea></div>'));
+  });
+  right.appendChild(map);
+  right.appendChild(el('<div class="panel"><p class="lbl">Persona</p><div id="personaHost"></div></div>'));
+  body.appendChild(right);
+  wrap.appendChild(body);
+
+  setTimeout(function(){
+    bind("e_notes",E,"notes"); bind("e_read",E,"humanRead");
+    ["says","thinks","does","feels","pains","gains"].forEach(function(k){ bind("e_"+k,E,k); });
+    renderPersona();
+    document.getElementById("e_map").onclick=function(){
+      var b=this; if(!E.notes.trim()){ toast("Add some research notes first"); return; }
+      runAI(b,
+        "You are a design researcher. From these raw research notes, build an empathy map.\n\nNOTES:\n"+E.notes
+        +"\n\nReturn ONLY JSON: {\"says\":[],\"thinks\":[],\"does\":[],\"feels\":[],\"pains\":[],\"gains\":[]}. "
+        +"3-5 short, concrete entries per field, grounded strictly in the notes.",
+        true,
+        function(o){ ["says","thinks","does","feels","pains","gains"].forEach(function(k){
+          if(o[k]) S.empathise[k]=(o[k]||[]).join("\n"); }); });
+    };
+    document.getElementById("e_persona").onclick=function(){
+      var b=this; if(!E.notes.trim()){ toast("Add some research notes first"); return; }
+      runAI(b,
+        "From these research notes, draft one primary persona for a design engagement.\n\nNOTES:\n"+E.notes
+        +"\n\nReturn ONLY JSON: {\"name\":\"\",\"role\":\"\",\"context\":\"\",\"goals\":[],\"frustrations\":[],\"quote\":\"\"}. "
+        +"Keep it realistic and grounded in the notes; the quote should sound like a real person.",
+        true,
+        function(o){ S.empathise.persona=o; });
+    };
+  },0);
+  return wrap;
+}
+function renderPersona(){
+  var host=document.getElementById("personaHost"); if(!host) return;
+  var p=S.empathise.persona;
+  if(!p){ host.innerHTML='<p class="empty">No persona yet — paste notes and press “Draft persona”, or write your own below.</p>'
+        +'<textarea class="sm" id="p_manual" placeholder="Name — role; one line of context"></textarea>';
+    setTimeout(function(){ var m=document.getElementById("p_manual"); if(m) m.addEventListener("input",function(){
+      S.empathise.persona={name:m.value, role:"", context:"", goals:[], frustrations:[], quote:""}; persist(); }); },0);
+    return; }
+  host.innerHTML='<div class="persona"><h4>'+esc(p.name||"Persona")+'</h4>'
+    +'<p class="role">'+esc(p.role||"")+(p.context?" — "+esc(p.context):"")+'</p>'
+    +(p.goals&&p.goals.length?'<p class="lbl" style="margin:8px 0 4px">Goals</p>'+esc(listToText(p.goals)).replace(/\n/g,"<br>"):"")
+    +(p.frustrations&&p.frustrations.length?'<p class="lbl" style="margin:10px 0 4px">Frustrations</p>'+esc(listToText(p.frustrations)).replace(/\n/g,"<br>"):"")
+    +(p.quote?'<p class="quote">“'+esc(p.quote)+'”</p>':"")
+    +'<div class="row" style="margin-top:12px"><button class="btn ghost" id="p_clear">Clear persona</button></div></div>';
+  setTimeout(function(){ var c=document.getElementById("p_clear"); if(c) c.onclick=function(){ S.empathise.persona=null; persist(); renderPersona(); }; },0);
+}
+
+/* ---------- STAGE 2: DEFINE ---------- */
+function renderDefine(){
+  var D=S.define, E=S.empathise;
+  var wrap=el('<section class="stage"></section>');
+  wrap.innerHTML = head("Stage 2 / 5","Define",
+    "Turn what you learned into the one problem worth solving. AI clusters the pains and drafts point-of-view statements; you choose the right problem — and sign it off, because everything downstream inherits this choice.")
+    + augband("Clusters pain points into themes; drafts “user needs… because…” statements.",
+              "Decides which problem is the real one — and which is a symptom.",
+              "Nothing proceeds to ideation until a named person confirms the problem is framed right.");
+  var body=el('<div class="grid g2"></div>');
+
+  var left=el('<div class="col"></div>');
+  left.appendChild(el('<div class="panel aizone">'
+    +'<p class="lbl"><span class="tagmini ai">AI</span> Cluster the pains</p>'
+    +'<p class="hint">Pulls your empathy-map pains into themes you can act on.</p>'
+    +'<textarea class="sm" id="d_clusters" placeholder="Themes will appear here — or type your own."></textarea>'
+    +'<button class="aibtn" data-label="Cluster pains" id="d_cluster"><span class="spark">✦</span> Cluster pains into themes</button>'
+    +'<button class="aibtn" data-label="Draft POV statements" id="d_pov"><span class="spark">✦</span> Draft point-of-view statements</button>'
+    +'</div>'));
+  left.appendChild(el('<div class="panel"><p class="lbl">Candidate problem statements</p>'
+    +'<p class="hint">Tap the one you believe is the real problem.</p><div id="povHost"></div></div>'));
+  body.appendChild(left);
+
+  var right=el('<div class="col"></div>');
+  right.appendChild(el('<div class="panel gazone">'
+    +'<p class="lbl"><span class="tagmini ga">GATE</span> Frame the right problem</p>'
+    +'<p class="hint">The chosen problem statement:</p>'
+    +'<textarea class="sm" id="d_chosen" placeholder="The problem we are solving is…"></textarea>'
+    +'<div class="gatecard" style="margin-top:12px"><div class="check" id="d_check"></div>'
+    +'<div><strong style="font-family:var(--display)">I confirm this is the right problem to solve.</strong>'
+    +'<div class="who"><input type="text" id="d_who" placeholder="Signed off by — name, role"></div></div></div>'
+    +'</div>'));
+  body.appendChild(right);
+  wrap.appendChild(body);
+
+  setTimeout(function(){
+    bind("d_clusters",D,"clusters"); bind("d_chosen",D,"chosenPov");
+    bind("d_who",D,"gateWho");
+    renderPovs();
+    var chk=document.getElementById("d_check");
+    chk.classList.toggle("on", D.gateOn); chk.innerHTML = D.gateOn?"✓":"";
+    chk.onclick=function(){ D.gateOn=!D.gateOn; chk.classList.toggle("on",D.gateOn); chk.innerHTML=D.gateOn?"✓":""; persist();
+      if(D.gateOn) toast("Problem signed off"); };
+    document.getElementById("d_cluster").onclick=function(){
+      var pains=E.pains||""; if(!pains.trim()){ toast("Fill in Pains on the empathy map first"); return; }
+      runAI(this,"Cluster these user pain points into 3-5 named themes.\n\nPAINS:\n"+pains
+        +"\n\nReturn ONLY JSON {\"themes\":[{\"name\":\"\",\"items\":[]}]}.",true,
+        function(o){ D.clusters=(o.themes||[]).map(function(t){return "▸ "+t.name+"\n"+(t.items||[]).map(function(i){return "   – "+i;}).join("\n");}).join("\n\n"); });
+    };
+    document.getElementById("d_pov").onclick=function(){
+      var ctx=(E.persona?JSON.stringify(E.persona):"")+"\nPAINS:\n"+(E.pains||"")+"\nTHEMES:\n"+(D.clusters||"");
+      if(!ctx.trim()){ toast("Add empathy-map detail first"); return; }
+      runAI(this,"Using this research, write 3 sharp point-of-view problem statements in the form "
+        +"\"[user] needs [need] because [insight]\".\n\n"+ctx
+        +"\n\nReturn ONLY JSON {\"povs\":[\"\",\"\",\"\"]}.",true,
+        function(o){ D.povs=o.povs||[]; });
+    };
+  },0);
+  return wrap;
+}
+function renderPovs(){
+  var host=document.getElementById("povHost"); if(!host) return; var D=S.define;
+  if(!D.povs.length){ host.innerHTML='<p class="empty">No statements yet — cluster the pains, then draft point-of-view statements.</p>'; return; }
+  host.innerHTML='<div class="chips">'+D.povs.map(function(p,i){
+    return '<button class="chip '+(D.chosenPov===p?"sel":"")+'" data-p="'+i+'">'+esc(p)+'</button>'; }).join("")+'</div>';
+  host.querySelectorAll(".chip").forEach(function(c){ c.onclick=function(){
+    D.chosenPov = D.povs[+c.dataset.p]; var t=document.getElementById("d_chosen"); if(t) t.value=D.chosenPov;
+    persist(); renderPovs(); }; });
+}
+
+/* ---------- STAGE 3: IDEATE ---------- */
+function renderIdeate(){
+  var I=S.ideate, D=S.define;
+  var wrap=el('<section class="stage"></section>');
+  wrap.innerHTML = head("Stage 3 / 5","Ideate",
+    "Open up the solution space. AI turns the problem into “How might we…” questions and generates ideas at volume; you judge what is safe, feasible and worth carrying forward.")
+    + augband("Reframes the problem as HMW questions; generates many ideas fast.",
+              "Selects, combines, and discards on feasibility, ethics and fit.",
+              "");
+  var body=el('<div class="grid g2"></div>');
+  var left=el('<div class="col"></div>');
+  left.appendChild(el('<div class="panel aizone">'
+    +'<p class="lbl"><span class="tagmini ai">AI</span> How might we…</p>'
+    +'<p class="hint">Based on your signed-off problem: '+(D.chosenPov?'<em>“'+esc(D.chosenPov)+'”</em>':'<strong>set a problem in Define first.</strong>')+'</p>'
+    +'<button class="aibtn" data-label="Generate HMW" id="i_hmw"><span class="spark">✦</span> Generate “How might we” questions</button>'
+    +'<div id="hmwHost" style="margin-top:12px"></div></div>'));
+  left.appendChild(el('<div class="panel aizone">'
+    +'<p class="lbl"><span class="tagmini ai">AI</span> Generate ideas</p>'
+    +'<p class="hint">Pick an HMW above, then generate a burst of ideas for it.</p>'
+    +'<button class="aibtn" data-label="Generate 15 ideas" id="i_ideas"><span class="spark">✦</span> Generate 15 ideas</button></div>'));
+  body.appendChild(left);
+  var right=el('<div class="col"></div>');
+  right.appendChild(el('<div class="panel huzone">'
+    +'<p class="lbl"><span class="tagmini hu">YOU</span> Idea pool — tap to shortlist</p>'
+    +'<p class="hint">Your judgement is the filter. Shortlist what is safe, feasible and worth a prototype.</p>'
+    +'<div id="ideaHost"></div></div>'));
+  body.appendChild(right);
+  wrap.appendChild(body);
+
+  setTimeout(function(){
+    renderHmw(); renderIdeas();
+    document.getElementById("i_hmw").onclick=function(){
+      if(!D.chosenPov){ toast("Set a problem statement in Define first"); return; }
+      runAI(this,"Turn this problem into 5 generative \"How might we...\" questions.\n\nPROBLEM: "+D.chosenPov
+        +"\n\nReturn ONLY JSON {\"hmw\":[]}.",true, function(o){ I.hmw=o.hmw||[]; });
+    };
+    document.getElementById("i_ideas").onclick=function(){
+      var q = I.chosenHmw || D.chosenPov; if(!q){ toast("Generate and pick an HMW first"); return; }
+      runAI(this,"Generate 15 diverse, concrete solution ideas for: \""+q
+        +"\". Mix safe and bold. Each idea max 12 words.\n\nReturn ONLY JSON {\"ideas\":[]}.",true,
+        function(o){ I.ideas=(I.ideas||[]).concat(o.ideas||[]); });
+    };
+  },0);
+  return wrap;
+}
+function renderHmw(){
+  var host=document.getElementById("hmwHost"); if(!host) return; var I=S.ideate;
+  if(!I.hmw.length){ host.innerHTML='<p class="empty">No questions yet.</p>'; return; }
+  host.innerHTML='<div class="chips">'+I.hmw.map(function(h,i){
+    return '<button class="chip '+(I.chosenHmw===h?"sel":"")+'" data-h="'+i+'">'+esc(h)+'</button>';}).join("")+'</div>';
+  host.querySelectorAll(".chip").forEach(function(c){ c.onclick=function(){ I.chosenHmw=I.hmw[+c.dataset.h]; persist(); renderHmw(); }; });
+}
+function renderIdeas(){
+  var host=document.getElementById("ideaHost"); if(!host) return; var I=S.ideate;
+  if(!I.ideas.length){ host.innerHTML='<p class="empty">No ideas yet — generate some on the left.</p>'; return; }
+  host.innerHTML='<div class="chips">'+I.ideas.map(function(d,i){
+    return '<button class="chip '+(I.picks.indexOf(d)>=0?"sel":"")+'" data-d="'+i+'">'+esc(d)+'</button>';}).join("")+'</div>'
+    +'<p class="hint" style="margin-top:10px">Shortlisted: '+I.picks.length+'</p>';
+  host.querySelectorAll(".chip").forEach(function(c){ c.onclick=function(){ var d=I.ideas[+c.dataset.d];
+    var k=I.picks.indexOf(d); if(k>=0) I.picks.splice(k,1); else I.picks.push(d); persist(); renderIdeas(); }; });
+}
+
+/* ---------- STAGE 4: PROTOTYPE ---------- */
+function renderPrototype(){
+  var P=S.prototype, I=S.ideate;
+  var wrap=el('<section class="stage"></section>');
+  wrap.innerHTML = head("Stage 4 / 5","Prototype",
+    "Build the smallest thing that tests the riskiest assumption. AI names the assumption most likely to sink the idea and suggests a cheap way to test it; you decide what to actually make.")
+    + augband("Surfaces the riskiest assumption; proposes a low-cost prototype.",
+              "Decides what to build, and how rough is rough enough.","");
+  var body=el('<div class="grid g2"></div>');
+  var left=el('<div class="col"></div>');
+  left.appendChild(el('<div class="panel aizone">'
+    +'<p class="lbl"><span class="tagmini ai">AI</span> Find the riskiest assumption</p>'
+    +'<p class="hint">Shortlisted ideas: '+(I.picks.length?esc(I.picks.join("; ")):'<strong>shortlist some ideas in Ideate first.</strong>')+'</p>'
+    +'<button class="aibtn" data-label="Find riskiest assumption" id="p_risk"><span class="spark">✦</span> Find riskiest assumption &amp; prototype</button>'
+    +'<div style="margin-top:12px"><p class="lbl">Riskiest assumption</p><textarea class="sm" id="p_risky"></textarea>'
+    +'<p class="lbl" style="margin-top:10px">Why it matters</p><textarea class="sm" id="p_why"></textarea></div></div>'));
+  body.appendChild(left);
+  var right=el('<div class="col"></div>');
+  right.appendChild(el('<div class="panel"><p class="lbl">What we will prototype</p>'
+    +'<textarea class="sm" id="p_proto" placeholder="The smallest artefact that tests the assumption…"></textarea>'
+    +'<p class="lbl" style="margin-top:12px">What it tests</p><textarea class="sm" id="p_tests"></textarea></div>'));
+  right.appendChild(el('<div class="panel huzone"><p class="lbl"><span class="tagmini hu">YOU</span> Your call</p>'
+    +'<p class="hint">What are you actually going to build, and why this and not more?</p>'
+    +'<textarea class="sm" id="p_decision"></textarea></div>'));
+  body.appendChild(right);
+  wrap.appendChild(body);
+
+  setTimeout(function(){
+    bind("p_risky",P,"risky"); bind("p_why",P,"why"); bind("p_proto",P,"proto");
+    bind("p_tests",P,"tests"); bind("p_decision",P,"decision");
+    document.getElementById("p_risk").onclick=function(){
+      if(!I.picks.length){ toast("Shortlist ideas in Ideate first"); return; }
+      runAI(this,"For these shortlisted concepts, identify the single riskiest assumption (the one that, if false, sinks it) "
+        +"and propose one cheap prototype to test it.\n\nCONCEPTS:\n"+I.picks.join("\n")
+        +"\n\nReturn ONLY JSON {\"riskiestAssumption\":\"\",\"why\":\"\",\"prototype\":\"\",\"whatItTests\":\"\"}.",true,
+        function(o){ P.risky=o.riskiestAssumption||""; P.why=o.why||""; P.proto=o.prototype||""; P.tests=o.whatItTests||""; });
+    };
+  },0);
+  return wrap;
+}
+
+/* ---------- STAGE 5: TEST ---------- */
+function renderTest(){
+  var T=S.test;
+  var wrap=el('<section class="stage"></section>');
+  wrap.innerHTML = head("Stage 5 / 5","Test",
+    "Put it in front of real people and learn. AI drafts the test plan and later synthesises the feedback; you read the human signal — the reaction underneath the words.")
+    + augband("Drafts an interview / test script; clusters session feedback into themes.",
+              "Reads the real reaction: what surprised them, what they didn’t say.","");
+  var body=el('<div class="grid g2"></div>');
+  var left=el('<div class="col"></div>');
+  left.appendChild(el('<div class="panel aizone">'
+    +'<p class="lbl"><span class="tagmini ai">AI</span> Test plan</p>'
+    +'<button class="aibtn" data-label="Draft a test plan" id="t_plan"><span class="spark">✦</span> Draft a test plan &amp; script</button>'
+    +'<textarea class="note" id="t_planbox" style="margin-top:12px" placeholder="Objective, who to test with, the script, what good looks like…"></textarea></div>'));
+  left.appendChild(el('<div class="panel aizone">'
+    +'<p class="lbl"><span class="tagmini ai">AI</span> Synthesise feedback</p>'
+    +'<p class="hint">Paste your raw session notes, then cluster them.</p>'
+    +'<textarea class="note" id="t_feedback" placeholder="Raw notes from your test sessions…"></textarea>'
+    +'<button class="aibtn" data-label="Synthesise feedback" id="t_syn"><span class="spark">✦</span> Synthesise into themes</button>'
+    +'<textarea class="note" id="t_synbox" style="margin-top:12px" placeholder="Themes will appear here."></textarea></div>'));
+  body.appendChild(left);
+  var right=el('<div class="col"></div>');
+  right.appendChild(el('<div class="panel huzone"><p class="lbl"><span class="tagmini hu">YOU</span> The human signal</p>'
+    +'<p class="hint">Beyond the themes: what did you feel in the room? What does your gut say to do next — iterate, pivot, or proceed?</p>'
+    +'<textarea class="note" id="t_signal"></textarea></div>'));
+  body.appendChild(right);
+  wrap.appendChild(body);
+
+  setTimeout(function(){
+    bind("t_planbox",T,"plan"); bind("t_feedback",T,"feedback"); bind("t_synbox",T,"synthesis"); bind("t_signal",T,"signal");
+    document.getElementById("t_plan").onclick=function(){
+      var ctx = (S.prototype.proto||"")+" — testing: "+(S.prototype.risky||"");
+      runAI(this,"Draft a lightweight usability test plan for this prototype.\n\nPROTOTYPE: "+ctx
+        +"\n\nReturn plain text with: Objective, Who to recruit, 5-question script, and Success criteria.",false,
+        function(o){ T.plan=o; });
+    };
+    document.getElementById("t_syn").onclick=function(){
+      if(!T.feedback.trim()){ toast("Paste your session notes first"); return; }
+      runAI(this,"Cluster these test-session notes into themes, surfaces and a recommended next move.\n\nNOTES:\n"+T.feedback
+        +"\n\nReturn plain text: Themes (with evidence), Surprises, and a one-line recommendation (iterate / pivot / proceed).",false,
+        function(o){ T.synthesis=o; });
+    };
+  },0);
+  return wrap;
+}
+
+/* ============================================================= TOOLBAR */
+document.getElementById("saveBtn").onclick=function(){
+  var blob=new Blob([JSON.stringify(S,null,2)],{type:"application/json"});
+  var a=document.createElement("a"); a.href=URL.createObjectURL(blob);
+  a.download="design-thinking-canvas.json"; a.click(); toast("Saved to file");
+};
+document.getElementById("loadBtn").onclick=function(){ document.getElementById("fileIn").click(); };
+document.getElementById("fileIn").onchange=function(e){
+  var f=e.target.files[0]; if(!f) return; var r=new FileReader();
+  r.onload=function(){ try{ S=JSON.parse(r.result); persist(); cur=0; render(); toast("Loaded"); }catch(err){ toast("Couldn't read that file"); } };
+  r.readAsText(f);
+};
+document.getElementById("printBtn").onclick=function(){ window.print(); };
+document.getElementById("resetBtn").onclick=function(){
+  if(confirm("Clear the whole canvas and start fresh?")){ S=JSON.parse(JSON.stringify(BLANK)); persist(); cur=0; maxReached=0; render(); }
+};
+document.querySelectorAll(".step").forEach(function(s){ s.onclick=function(){ cur=+s.dataset.i; maxReached=Math.max(maxReached,cur); render(); }; });
+window.addEventListener("resize", function(){ var t=document.getElementById("steptrack"),f=document.getElementById("stepfill");
+  if(t&&f){ var w=t.clientWidth-10,seg=w/5; f.style.left=(5+cur*seg)+"px"; f.style.width=seg+"px"; } });
+
+/* go */
+render();
+</script>
+</body>
+</html>
