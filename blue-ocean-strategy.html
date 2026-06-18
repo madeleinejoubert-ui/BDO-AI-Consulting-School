@@ -513,7 +513,9 @@ function stageReal(){
   wrap.appendChild(el('<div class="panel gazone"><p class="lbl"><span class="tagmini ga">GATE</span> Business case sign-off</p>'
     +'<div class="gatecard"><div class="check" id="q_check"></div><div><strong style="font-family:var(--display)">I confirm the strategy is desirable, viable and adoptable.</strong>'
     +'<div style="margin-top:8px"><input type="text" id="q_who" placeholder="Signed off by — name, role"></div></div></div></div>'));
+  wrap.appendChild(el('<div class="row" style="margin-top:4px"><button class="btn solid" id="q_export">\u{1F5BC} Export the strategy canvas to your deck</button><span class="hint" style="margin:0">a clean PNG of your value curve</span></div>'));
   setTimeout(function(){
+    var ex=document.getElementById("q_export"); if(ex) ex.onclick=exportPNG;
     bind("q_util",Q,"utility"); bind("q_price",Q,"price"); bind("q_cost",Q,"costing"); bind("q_hurdles",Q,"hurdles"); bind("q_index",Q,"index"); bind("q_who",Q,"who");
     var chk=document.getElementById("q_check"); chk.classList.toggle("on",Q.gateOn); chk.innerHTML=Q.gateOn?"✓":"";
     chk.onclick=function(){ Q.gateOn=!Q.gateOn; chk.classList.toggle("on",Q.gateOn); chk.innerHTML=Q.gateOn?"✓":""; persist(); if(Q.gateOn) toast("Business case signed off"); };
@@ -529,15 +531,17 @@ function stageReal(){
 /* ===== export PNG ===== */
 function exportPNG(){
   var svg=document.querySelector('#chartHost2 svg') || document.querySelector('#chartHost svg');
-  if(!svg){ toast("Open a canvas stage first"); return; }
+  var _temp=null;
+  if(!svg){ _temp=document.createElement('div'); _temp.style.cssText='position:fixed;left:-99999px;top:0'; _temp.innerHTML=chartSVG(newSeriesList()); document.body.appendChild(_temp); svg=_temp.querySelector('svg'); }
+  if(!svg){ toast("Build a value curve first"); if(_temp){_temp.remove();} return; }
   var xml=new XMLSerializer().serializeToString(svg);
   var url='data:image/svg+xml;base64,'+btoa(unescape(encodeURIComponent(xml)));
   var img=new Image();
   img.onload=function(){ var scale=2, vb=svg.viewBox.baseVal, W=(vb&&vb.width)||860, H=(vb&&vb.height)||460;
     var c=document.createElement('canvas'); c.width=W*scale; c.height=H*scale; var ctx=c.getContext('2d');
     ctx.fillStyle='#fff'; ctx.fillRect(0,0,c.width,c.height); ctx.drawImage(img,0,0,c.width,c.height);
-    var a=document.createElement('a'); a.download='strategy-canvas.png'; a.href=c.toDataURL('image/png'); a.click(); toast("Canvas saved as image"); };
-  img.onerror=function(){ toast("Export failed — try a screenshot"); };
+    var a=document.createElement('a'); a.download='strategy-canvas.png'; a.href=c.toDataURL('image/png'); a.click(); toast("Canvas saved as image"); if(_temp){_temp.remove();} };
+  img.onerror=function(){ toast("Export failed — try a screenshot"); if(_temp){_temp.remove();} };
   img.src=url;
 }
 
