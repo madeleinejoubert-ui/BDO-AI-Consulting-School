@@ -213,7 +213,7 @@
     <pre id="mPrompt"></pre>
     <div class="row" style="margin-top:10px">
       <button class="btn" id="mCopy">Copy prompt</button>
-      <a class="btn ghost" href="https://claude.ai/new" target="_blank" rel="noopener">Open Claude ↗</a>
+      <span style="font-size:11.5px;color:var(--muted);font-family:var(--display);font-weight:600;align-self:center">Open in:</span><a class="btn ghost" href="https://copilot.microsoft.com" target="_blank" rel="noopener">Copilot ↗</a><a class="btn ghost" href="https://claude.ai/new" target="_blank" rel="noopener">Claude ↗</a><a class="btn ghost" href="https://chatgpt.com" target="_blank" rel="noopener">ChatGPT ↗</a>
     </div>
     <p class="lbl" style="margin:16px 0 7px">2 · Paste the result back</p>
     <textarea id="mResult" placeholder="Paste exactly what the assistant gave you here…" style="min-height:130px"></textarea>
@@ -227,6 +227,16 @@
 
 <script>
 "use strict";
+function looseJSON(s){
+  if(s==null) throw new Error("empty");
+  var t=String(s).replace(/```json/gi,"").replace(/```/g,"");
+  var m=t.match(/[\[{][\s\S]*[\]}]/); if(m) t=m[0];
+  t=t.replace(/[\u201C\u201D\u201E\u201F\u2033]/g,'"').replace(/[\u2018\u2019\u201A\u201B\u2032]/g,"'");
+  t=t.replace(/,\s*([}\]])/g,"$1");
+  try{ return JSON.parse(t); }
+  catch(e){ return JSON.parse(t.replace(/[\u0000-\u0019]+/g," ")); }
+}
+
 /* ===================== STATE ===================== */
 var BLANK = {
   job:{notes:"",situation:"",motivation:"",outcome:"",functional:"",emotional:"",social:"",contenders:""},
@@ -251,7 +261,7 @@ async function askClaude(prompt, wantJson){
   var data = await res.json();
   var text=(data.content||[]).filter(function(b){return b.type==="text";}).map(function(b){return b.text;}).join("\n").trim();
   if(!text) throw new Error("empty");
-  if(wantJson){ var clean=text.replace(/```json/gi,"").replace(/```/g,"").trim(); var m=clean.match(/[\[{][\s\S]*[\]}]/); return JSON.parse(m?m[0]:clean); }
+  if(wantJson){ var clean=text.replace(/```json/gi,"").replace(/```/g,"").trim(); var m=clean.match(/[\[{][\s\S]*[\]}]/); return looseJSON(m?m[0]:clean); }
   return text;
 }
 async function runAI(btn, prompt, wantJson, onResult){
@@ -271,7 +281,7 @@ document.getElementById("mClose").onclick=closeFallback;
 document.getElementById("mCopy").onclick=function(){ navigator.clipboard.writeText(document.getElementById("mPrompt").textContent).then(function(){ toast("Prompt copied"); }); };
 document.getElementById("mApply").onclick=function(){
   var raw=document.getElementById("mResult").value.trim(); if(!raw){ toast("Paste the assistant's result first"); return; }
-  try{ var out; if(fbState.wantJson){ var clean=raw.replace(/```json/gi,"").replace(/```/g,"").trim(); var m=clean.match(/[\[{][\s\S]*[\]}]/); out=JSON.parse(m?m[0]:clean); } else out=raw;
+  try{ var out; if(fbState.wantJson){ var clean=raw.replace(/```json/gi,"").replace(/```/g,"").trim(); var m=clean.match(/[\[{][\s\S]*[\]}]/); out=looseJSON(m?m[0]:clean); } else out=raw;
     fbState.onResult(out); persist(); render(); closeFallback(); toast("Applied — now make it yours");
   }catch(e){ toast("Couldn't read that — paste the full result and try again"); }
 };
