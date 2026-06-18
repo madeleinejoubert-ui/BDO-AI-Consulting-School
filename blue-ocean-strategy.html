@@ -188,7 +188,7 @@
     <p class="lbl" style="margin:2px 0 7px">1 · Copy this prompt</p>
     <pre id="mPrompt"></pre>
     <div class="row" style="margin-top:10px"><button class="btn" id="mCopy">Copy prompt</button>
-      <a class="btn ghost" href="https://claude.ai/new" target="_blank" rel="noopener">Open Claude ↗</a></div>
+      <a class="btn ghost" href="https://copilot.microsoft.com" target="_blank" rel="noopener">Open your AI tool ↗</a></div>
     <p class="lbl" style="margin:16px 0 7px">2 · Paste the result back</p>
     <textarea id="mResult" placeholder="Paste exactly what the assistant gave you here…" style="min-height:130px"></textarea>
     <div class="modalrow"><button class="btn ghost" id="mClose">Cancel</button><button class="btn solid" id="mApply">Apply</button></div>
@@ -198,6 +198,16 @@
 
 <script>
 "use strict";
+function looseJSON(s){
+  if(s==null) throw new Error("empty");
+  var t=String(s).replace(/```json/gi,"").replace(/```/g,"");
+  var m=t.match(/[\[{][\s\S]*[\]}]/); if(m) t=m[0];
+  t=t.replace(/[\u201C\u201D\u201E\u201F\u2033]/g,'"').replace(/[\u2018\u2019\u201A\u201B\u2032]/g,"'");
+  t=t.replace(/,\s*([}\]])/g,"$1");
+  try{ return JSON.parse(t); }
+  catch(e){ return JSON.parse(t.replace(/[\u0000-\u0019]+/g," ")); }
+}
+
 /* ===== state ===== */
 function mid(n){ var a=[]; for(var i=0;i<n;i++) a.push(5); return a; }
 var BLANK={
@@ -228,7 +238,7 @@ async function askClaude(prompt, wantJson){
   if(!res.ok) throw new Error("status "+res.status);
   var data=await res.json(); var text=(data.content||[]).filter(function(b){return b.type==="text";}).map(function(b){return b.text;}).join("\n").trim();
   if(!text) throw new Error("empty");
-  if(wantJson){ var clean=text.replace(/```json/gi,"").replace(/```/g,"").trim(); var m=clean.match(/[\[{][\s\S]*[\]}]/); return JSON.parse(m?m[0]:clean); }
+  if(wantJson){ var clean=text.replace(/```json/gi,"").replace(/```/g,"").trim(); var m=clean.match(/[\[{][\s\S]*[\]}]/); return looseJSON(m?m[0]:clean); }
   return text;
 }
 async function runAI(btn, prompt, wantJson, onResult){
@@ -243,7 +253,7 @@ function closeFb(){ document.getElementById("modal").classList.remove("show"); d
 document.getElementById("mClose").onclick=closeFb;
 document.getElementById("mCopy").onclick=function(){ navigator.clipboard.writeText(document.getElementById("mPrompt").textContent).then(function(){ toast("Prompt copied"); }); };
 document.getElementById("mApply").onclick=function(){ var raw=document.getElementById("mResult").value.trim(); if(!raw){ toast("Paste the result first"); return; }
-  try{ var out; if(fbState.wantJson){ var clean=raw.replace(/```json/gi,"").replace(/```/g,"").trim(); var m=clean.match(/[\[{][\s\S]*[\]}]/); out=JSON.parse(m?m[0]:clean); } else out=raw;
+  try{ var out; if(fbState.wantJson){ var clean=raw.replace(/```json/gi,"").replace(/```/g,"").trim(); var m=clean.match(/[\[{][\s\S]*[\]}]/); out=looseJSON(m?m[0]:clean); } else out=raw;
     fbState.onResult(out); persist(); render(); closeFb(); toast("Applied — now make it yours");
   }catch(e){ toast("Couldn't read that — paste the full result"); } };
 
