@@ -227,6 +227,9 @@
 
 <script>
 "use strict";
+function copyText(t){ if(navigator.clipboard && window.isSecureContext){ navigator.clipboard.writeText(t).then(function(){toast("Prompt copied");},function(){fallbackCopy(t);}); } else { fallbackCopy(t); } }
+function fallbackCopy(t){ try{ var ta=document.createElement("textarea"); ta.value=t; ta.setAttribute("readonly",""); ta.style.position="fixed"; ta.style.left="-9999px"; document.body.appendChild(ta); ta.select(); ta.setSelectionRange(0,t.length); var ok=document.execCommand("copy"); document.body.removeChild(ta); toast(ok?"Prompt copied":"Press Ctrl+C / Cmd+C to copy"); } catch(e){ toast("Select the text and copy manually"); } }
+
 function looseJSON(s){
   if(s==null) throw new Error("empty");
   var t=String(s).replace(/```json/gi,"").replace(/```/g,"");
@@ -278,7 +281,7 @@ function openFallback(prompt,wantJson,onResult){
 }
 function closeFallback(){ document.getElementById("modal").classList.remove("show"); document.getElementById("mResult").value=""; }
 document.getElementById("mClose").onclick=closeFallback;
-document.getElementById("mCopy").onclick=function(){ navigator.clipboard.writeText(document.getElementById("mPrompt").textContent).then(function(){ toast("Prompt copied"); }); };
+document.getElementById("mCopy").onclick=function(){ copyText(document.getElementById("mPrompt").textContent); };
 document.getElementById("mApply").onclick=function(){
   var raw=document.getElementById("mResult").value.trim(); if(!raw){ toast("Paste the assistant's result first"); return; }
   try{ var out; if(fbState.wantJson){ var clean=raw.replace(/```json/gi,"").replace(/```/g,"").trim(); var m=clean.match(/[\[{][\s\S]*[\]}]/); out=looseJSON(m?m[0]:clean); } else out=raw;
@@ -497,6 +500,191 @@ document.getElementById("resetBtn").onclick=function(){ if(confirm("Clear the wh
 document.querySelectorAll(".step").forEach(function(s){ s.onclick=function(){ cur=+s.dataset.i; maxReached=Math.max(maxReached,cur); render(); }; });
 window.addEventListener("resize",function(){ var t=document.getElementById("steptrack"),f=document.getElementById("stepfill"); if(t&&f){ var w=t.clientWidth-10,seg=w/4; f.style.left=(5+cur*seg)+"px"; f.style.width=seg+"px"; } });
 render();
+</script>
+
+<style>
+ .cpd-fab{position:fixed;left:20px;bottom:20px;z-index:90;background:var(--ai,#22409A);color:#fff;border:none;border-radius:11px;
+   font-family:var(--display,sans-serif);font-weight:700;font-size:13px;padding:11px 16px;cursor:pointer;box-shadow:0 10px 24px -10px rgba(0,0,0,.5)}
+ .cpd-fab:hover{filter:brightness(1.08)}
+ .cpd-modal{position:fixed;inset:0;background:rgba(20,20,40,.55);z-index:200;display:none;align-items:center;justify-content:center;padding:20px}
+ .cpd-modal.show{display:flex}
+ .cpd-card{background:var(--card,#fff);color:var(--ink,#1d1d1b);border-radius:16px;max-width:660px;width:100%;max-height:88vh;overflow:auto;padding:24px;border:1px solid var(--line,#e5e5ea);font-family:var(--body,Georgia,serif)}
+ .cpd-card h3{font-family:var(--display,sans-serif);font-weight:800;font-size:20px;margin:0 0 4px}
+ .cpd-card .sub{font-family:var(--mono,monospace);font-size:12px;color:var(--muted,#6c6c75);margin:0 0 16px}
+ .cpd-card label{font-family:var(--display,sans-serif);font-weight:700;font-size:13px;display:block;margin:14px 0 6px}
+ .cpd-card input[type=text],.cpd-card textarea{width:100%;border:1px solid var(--line-2,#d4d4dc);border-radius:9px;padding:10px;font-family:var(--body,Georgia,serif);font-size:14px}
+ .cpd-card textarea{min-height:64px;resize:vertical}
+ .cpd-q{margin:12px 0;padding:12px;border:1px solid var(--line,#e5e5ea);border-radius:10px}
+ .cpd-q p{font-family:var(--display,sans-serif);font-weight:700;font-size:14px;margin:0 0 8px}
+ .cpd-q label{font-family:var(--body,Georgia,serif);font-weight:400;display:flex;gap:8px;align-items:flex-start;margin:6px 0;cursor:pointer}
+ .cpd-q.right{border-color:#1f9d57;background:#f0faf4}.cpd-q.wrong{border-color:#e23744;background:#fdeef0}
+ .cpd-row{display:flex;gap:10px;justify-content:flex-end;margin-top:18px;flex-wrap:wrap}
+ .cpd-btn{font-family:var(--display,sans-serif);font-weight:700;font-size:13px;border-radius:9px;padding:10px 16px;cursor:pointer;border:1px solid var(--line-2,#d4d4dc);background:#fff;color:var(--ink,#1d1d1b)}
+ .cpd-btn.go{background:var(--pop,#E81A3B);border-color:var(--pop,#E81A3B);color:#fff}
+ .cpd-record h2{font-family:var(--display,sans-serif);font-size:20px;margin:0 0 2px}
+ .cpd-record .rmeta{font-family:var(--mono,monospace);font-size:12px;color:var(--muted,#6c6c75);margin:0 0 14px}
+ .cpd-record .rline{display:flex;justify-content:space-between;border-top:1px solid var(--line,#e5e5ea);padding:8px 0;font-size:13px}
+ .cpd-record .rsec{font-family:var(--display,sans-serif);font-weight:700;font-size:12px;letter-spacing:.05em;text-transform:uppercase;color:var(--pop,#E81A3B);margin:16px 0 6px}
+ .cpd-record .rtext{font-family:var(--body,Georgia,serif);font-size:13.5px;line-height:1.5;white-space:pre-wrap;margin:0 0 8px}
+ @media print{ body.cpd-print > *{display:none !important;} body.cpd-print #cpdRecordOverlay{display:flex !important;position:static;background:#fff;padding:0} body.cpd-print .cpd-card{box-shadow:none;border:none;max-height:none} body.cpd-print .cpd-row{display:none} }
+</style>
+<button class="cpd-fab" id="cpdOpen">✓ Log your CPD</button>
+<div class="cpd-modal" id="cpdModal"><div class="cpd-card" id="cpdBody"></div></div>
+<div class="cpd-modal" id="cpdRecordOverlay"><div class="cpd-card cpd-record" id="cpdRecordBody"></div></div>
+<script>
+(function(){
+ var CFG={"module": "Jobs to be Done", "hours": 0.5, "prompts": ["What is the most useful thing you learned or applied here?", "How will you use this on a live client engagement?", "Where will you keep a human judgement or sign-off in control?"], "quiz": [{"q": "Jobs to be Done focuses on…", "o": ["The progress the customer is trying to make", "The product's features", "The lowest price"], "a": 0}, {"q": "An opportunity is highest when…", "o": ["Importance is low and satisfaction is high", "Importance is high and satisfaction is low", "Both are high"], "a": 1}, {"q": "The forces of progress include push, pull, habit and…", "o": ["Anxiety", "Budget", "Branding"], "a": 0}]};
+ var KEY="cpd:"+CFG.module;
+ function load(){ try{return JSON.parse(localStorage.getItem(KEY))||{};}catch(e){return {};} }
+ function save(d){ try{localStorage.setItem(KEY,JSON.stringify(d));}catch(e){} }
+ function esc(s){return (s||"").replace(/&/g,"&amp;").replace(/</g,"&lt;").replace(/>/g,"&gt;");}
+ var st=load();
+ var modal=document.getElementById("cpdModal"), body=document.getElementById("cpdBody");
+ function render(){
+  var h='<h3>Reflect &amp; log your CPD</h3><div class="sub">'+esc(CFG.module)+' · '+CFG.hours+' CPD hour'+(CFG.hours==1?'':'s')+'</div>';
+  h+='<label>Your name</label><input type="text" id="cpd_name" value="'+esc(st.name||"")+'" placeholder="For your certificate">';
+  CFG.prompts.forEach(function(p,i){ h+='<label>'+esc(p)+'</label><textarea id="cpd_r'+i+'">'+esc((st.reflections||[])[i]||"")+'</textarea>'; });
+  h+='<label style="margin-top:18px">Quick knowledge check</label>';
+  CFG.quiz.forEach(function(q,qi){ h+='<div class="cpd-q" id="cpd_q'+qi+'"><p>'+(qi+1)+'. '+esc(q.q)+'</p>';
+    q.o.forEach(function(opt,oi){ h+='<label><input type="radio" name="cpd_q'+qi+'" value="'+oi+'"> '+esc(opt)+'</label>'; });
+    h+='</div>'; });
+  h+='<div class="cpd-row"><button class="cpd-btn" id="cpd_cancel">Close</button><button class="cpd-btn go" id="cpd_gen">Generate CPD record</button></div>';
+  body.innerHTML=h;
+  document.getElementById("cpd_cancel").onclick=function(){ modal.classList.remove("show"); };
+  document.getElementById("cpd_gen").onclick=generate;
+ }
+ function collect(){
+  var name=document.getElementById("cpd_name").value.trim();
+  var refl=CFG.prompts.map(function(_,i){return document.getElementById("cpd_r"+i).value.trim();});
+  var ans=CFG.quiz.map(function(_,qi){var s=document.querySelector('input[name="cpd_q'+qi+'"]:checked');return s?+s.value:-1;});
+  return {name:name,reflections:refl,answers:ans};
+ }
+ function generate(){
+  var d=collect();
+  if(!d.name){ alert("Please add your name for the certificate."); return; }
+  if(d.reflections.some(function(r){return !r;})){ alert("Please complete all three reflections — they are your CPD evidence."); return; }
+  if(d.answers.some(function(a){return a<0;})){ alert("Please answer all knowledge-check questions."); return; }
+  // mark quiz
+  var score=0; CFG.quiz.forEach(function(q,qi){ var el=document.getElementById("cpd_q"+qi); el.classList.remove("right","wrong"); if(d.answers[qi]===q.a){score++;el.classList.add("right");}else{el.classList.add("wrong");} });
+  st={name:d.name,reflections:d.reflections,answers:d.answers,date:new Date().toISOString()}; save(st);
+  // append to CPD log
+  try{ var log=JSON.parse(localStorage.getItem("cpdLog")||"[]"); log.push({module:CFG.module,hours:CFG.hours,date:st.date,name:d.name,score:score+"/"+CFG.quiz.length}); localStorage.setItem("cpdLog",JSON.stringify(log)); }catch(e){}
+  showRecord(d,score);
+ }
+ function showRecord(d,score){
+  var rb=document.getElementById("cpdRecordBody"), ov=document.getElementById("cpdRecordOverlay");
+  var dt=new Date().toLocaleDateString("en-GB",{day:"numeric",month:"long",year:"numeric"});
+  var h='<h2>CPD Record</h2><div class="rmeta">Continuing Professional Development · self-recorded</div>';
+  h+='<div class="rline"><span>Learner</span><strong>'+esc(d.name)+'</strong></div>';
+  h+='<div class="rline"><span>Activity</span><strong>'+esc(CFG.module)+'</strong></div>';
+  h+='<div class="rline"><span>CPD hours</span><strong>'+CFG.hours+'</strong></div>';
+  h+='<div class="rline"><span>Knowledge check</span><strong>'+score+' / '+CFG.quiz.length+'</strong></div>';
+  h+='<div class="rline"><span>Date</span><strong>'+dt+'</strong></div>';
+  h+='<div class="rsec">Reflections</div>';
+  CFG.prompts.forEach(function(p,i){ h+='<div class="rtext"><em>'+esc(p)+'</em>\n'+esc(d.reflections[i])+'</div>'; });
+  h+='<div class="rsec">Verification</div><div class="rtext">Recorded via the platform learning module. Retain for your CPD log or professional body.</div>';
+  h+='<div class="cpd-row"><button class="cpd-btn" id="cpd_rclose">Close</button><button class="cpd-btn" id="cpd_dl">Download</button><button class="cpd-btn go" id="cpd_print">Print / Save as PDF</button></div>';
+  rb.innerHTML=h; modal.classList.remove("show"); ov.classList.add("show");
+  document.getElementById("cpd_rclose").onclick=function(){ ov.classList.remove("show"); };
+  document.getElementById("cpd_print").onclick=function(){ document.body.classList.add("cpd-print"); window.print(); };
+  window.addEventListener("afterprint",function(){ document.body.classList.remove("cpd-print"); });
+  document.getElementById("cpd_dl").onclick=function(){
+    var html='<!doctype html><meta charset="utf-8"><title>CPD Record</title><body style="font-family:Georgia,serif;max-width:640px;margin:40px auto;padding:0 20px">'+rb.innerHTML.replace(/<div class="cpd-row[\s\S]*?<\/div>\s*$/,'')+'</body>';
+    var b=new Blob([html],{type:"text/html"}); var a=document.createElement("a"); a.href=URL.createObjectURL(b); a.download="CPD-record-"+CFG.module.replace(/[^a-z0-9]+/gi,"-").toLowerCase()+".html"; a.click();
+  };
+ }
+ document.getElementById("cpdOpen").onclick=function(){ render(); modal.classList.add("show"); };
+})();
+</script>
+
+<style>
+ .tpl-fab{position:fixed;left:20px;bottom:64px;z-index:90;background:var(--pop,#E81A3B);color:#fff;border:none;border-radius:11px;
+   font-family:var(--display,sans-serif);font-weight:700;font-size:13px;padding:11px 16px;cursor:pointer;box-shadow:0 10px 24px -10px rgba(0,0,0,.5)}
+ .tpl-fab:hover{filter:brightness(1.08)}
+ .tpl-modal{position:fixed;inset:0;background:rgba(20,20,40,.55);z-index:210;display:none;align-items:center;justify-content:center;padding:20px}
+ .tpl-modal.show{display:flex}
+ .tpl-card{background:var(--card,#fff);color:var(--ink,#1d1d1b);border-radius:16px;max-width:680px;width:100%;max-height:88vh;overflow:auto;padding:24px;border:1px solid var(--line,#e5e5ea);font-family:var(--body,Georgia,serif)}
+ .tpl-card h3{font-family:var(--display,sans-serif);font-weight:800;font-size:20px;margin:0 0 4px}
+ .tpl-card .sub{font-family:var(--mono,monospace);font-size:12px;color:var(--muted,#6c6c75);margin:0 0 16px}
+ .tpl-list a{display:block;border:1px solid var(--line,#e5e5ea);border-radius:11px;padding:14px;margin:0 0 10px;text-decoration:none;color:inherit;cursor:pointer;transition:.12s}
+ .tpl-list a:hover{border-color:var(--pop,#E81A3B);transform:translateY(-1px)}
+ .tpl-list a b{font-family:var(--display,sans-serif);font-size:15px;display:block;margin-bottom:3px}
+ .tpl-list a span{font-size:13px;color:var(--muted,#6c6c75)}
+ .tpl-list a .gate{font-family:var(--display,sans-serif);font-size:9px;font-weight:700;letter-spacing:.05em;color:#fff;background:var(--pop,#E81A3B);padding:2px 7px;border-radius:5px;margin-left:8px;text-transform:uppercase}
+ .tpl-card label{font-family:var(--display,sans-serif);font-weight:700;font-size:13px;display:block;margin:14px 0 5px}
+ .tpl-card input[type=text],.tpl-card textarea{width:100%;border:1px solid var(--line-2,#d4d4dc);border-radius:9px;padding:10px;font-family:var(--body,Georgia,serif);font-size:14px}
+ .tpl-card textarea{min-height:70px;resize:vertical}
+ .tpl-signoff{margin-top:18px;border:1px solid var(--pop,#E81A3B);border-radius:11px;padding:14px;background:rgba(232,26,59,.05)}
+ .tpl-signoff .so-h{font-family:var(--display,sans-serif);font-weight:800;font-size:13px;color:var(--pop,#E81A3B);margin:0 0 8px}
+ .tpl-3{display:grid;grid-template-columns:1fr 1fr 1fr;gap:10px}
+ .tpl-row{display:flex;gap:10px;justify-content:space-between;margin-top:18px;flex-wrap:wrap}
+ .tpl-btn{font-family:var(--display,sans-serif);font-weight:700;font-size:13px;border-radius:9px;padding:10px 16px;cursor:pointer;border:1px solid var(--line-2,#d4d4dc);background:#fff;color:var(--ink,#1d1d1b)}
+ .tpl-btn.go{background:var(--pop,#E81A3B);border-color:var(--pop,#E81A3B);color:#fff}
+ @media (max-width:600px){.tpl-3{grid-template-columns:1fr}}
+</style>
+<button class="tpl-fab" id="tplOpen">📄 Working templates</button>
+<div class="tpl-modal" id="tplModal"><div class="tpl-card" id="tplBody"></div></div>
+<script>
+(function(){
+ var BRAND={"name": "BDO", "product": "AI-Augmented Consulting", "color": "#E81A3B", "accent": "#22409A"}, TPLS=[{"id": "jt1", "title": "Job statement", "intro": "Define the progress the customer is really trying to make.", "fields": [{"l": "When… I want to… so I can…", "t": "area"}, {"l": "Functional, emotional & social dimensions", "t": "area"}, {"l": "Who has this job", "t": "area"}]}, {"id": "jt2", "title": "Forces of progress", "intro": "Weigh what pushes the customer to switch against what holds them back.", "fields": [{"l": "Push of the current situation", "t": "area"}, {"l": "Pull of the new solution", "t": "area"}, {"l": "Habit / anxiety of the old", "t": "area"}, {"l": "Anxiety of the new", "t": "area"}, {"l": "Net read on the forces", "t": "area"}]}, {"id": "jt3", "title": "Opportunity decision", "intro": "Find where importance outruns satisfaction — and choose.", "fields": [{"l": "Top opportunities (importance vs satisfaction)", "t": "area"}, {"l": "Where need most outruns satisfaction", "t": "area"}, {"l": "Where we'll focus, and why", "t": "area"}]}, {"id": "jt4", "title": "Switch-interview guide", "intro": "Plan how you'll learn the real story of the switch.", "fields": [{"l": "The switch moment to explore", "t": "area"}, {"l": "Questions to ask", "t": "area"}, {"l": "What strong evidence looks like", "t": "area"}]}];
+ var modal=document.getElementById("tplModal"), body=document.getElementById("tplBody");
+ function esc(s){return (s||"").replace(/&/g,"&amp;").replace(/</g,"&lt;").replace(/>/g,"&gt;");}
+ function key(id){return "tpl:"+id;}
+ function loadV(id){ try{return JSON.parse(localStorage.getItem(key(id)))||{};}catch(e){return {};} }
+ function saveV(id,v){ try{localStorage.setItem(key(id),JSON.stringify(v));}catch(e){} }
+ function list(){
+  var h='<h3>Working templates</h3><div class="sub">Fill on screen, then export to Word. Your work autosaves.</div><div class="tpl-list">';
+  TPLS.forEach(function(t){ h+='<a data-id="'+t.id+'"><b>'+esc(t.title)+(t.signoff?'<span class="gate">Sign-off</span>':'')+'</b><span>'+esc(t.intro)+'</span></a>'; });
+  h+='</div><div class="tpl-row"><button class="tpl-btn" id="tpl_x">Close</button></div>';
+  body.innerHTML=h;
+  body.querySelectorAll(".tpl-list a").forEach(function(a){ a.onclick=function(){ open(a.getAttribute("data-id")); }; });
+  document.getElementById("tpl_x").onclick=function(){ modal.classList.remove("show"); };
+ }
+ function findT(id){ for(var i=0;i<TPLS.length;i++) if(TPLS[i].id===id) return TPLS[i]; }
+ function open(id){
+  var t=findT(id), v=loadV(id);
+  var h='<h3>'+esc(t.title)+'</h3><div class="sub">'+esc(t.intro)+'</div>';
+  t.fields.forEach(function(f,i){ var val=esc(v["f"+i]||"");
+   h+='<label>'+esc(f.l)+'</label>'+(f.t==="text"?'<input type="text" id="tf'+i+'" value="'+val+'">':'<textarea id="tf'+i+'">'+val+'</textarea>'); });
+  if(t.signoff){ h+='<div class="tpl-signoff"><div class="so-h">● Sign-off — a named human owns this decision</div><div class="tpl-3">'
+   +'<div><label>Name</label><input type="text" id="so_n" value="'+esc(v.so_n||"")+'"></div>'
+   +'<div><label>Role</label><input type="text" id="so_r" value="'+esc(v.so_r||"")+'"></div>'
+   +'<div><label>Date</label><input type="text" id="so_d" value="'+esc(v.so_d||"")+'"></div></div></div>'; }
+  h+='<div class="tpl-row"><button class="tpl-btn" id="tpl_back">‹ All templates</button><div><button class="tpl-btn" id="tpl_print">Print</button> <button class="tpl-btn go" id="tpl_word">Export to Word</button></div></div>';
+  body.innerHTML=h;
+  function collect(){ var o={}; t.fields.forEach(function(f,i){ o["f"+i]=document.getElementById("tf"+i).value; }); if(t.signoff){o.so_n=val2("so_n");o.so_r=val2("so_r");o.so_d=val2("so_d");} return o; }
+  function val2(id){var e=document.getElementById(id);return e?e.value:"";}
+  body.querySelectorAll("input,textarea").forEach(function(el){ el.addEventListener("input",function(){ saveV(id,collect()); }); });
+  document.getElementById("tpl_back").onclick=list;
+  document.getElementById("tpl_word").onclick=function(){ exportDoc(t,collect()); };
+  document.getElementById("tpl_print").onclick=function(){ var w=window.open("","_blank"); if(!w){alert("Allow pop-ups to print, or use Export to Word.");return;} w.document.write(buildHTML(t,collect())); w.document.close(); w.focus(); w.print(); };
+ }
+ function buildHTML(t,v){
+  var date=new Date().toLocaleDateString("en-GB",{day:"numeric",month:"long",year:"numeric"});
+  var rows=t.fields.map(function(f,i){ return '<p style="margin:14px 0 3px;font-family:Arial;font-weight:bold;font-size:11pt;color:#222">'+esc(f.l)+'</p>'
+    +'<p style="margin:0;font-family:Georgia;font-size:11pt;color:#111;border-bottom:1px solid #eee;padding-bottom:8px;white-space:pre-wrap">'+(esc(v["f"+i])||"&nbsp;")+'</p>'; }).join("");
+  var so=""; if(t.signoff){ so='<table width="100%" style="margin-top:18px;border-collapse:collapse"><tr>'
+    +'<td style="border:1px solid #ddd;padding:8px;font-family:Arial;font-size:10pt"><b>Signed off</b><br>'+(esc(v.so_n)||"&nbsp;")+'</td>'
+    +'<td style="border:1px solid #ddd;padding:8px;font-family:Arial;font-size:10pt"><b>Role</b><br>'+(esc(v.so_r)||"&nbsp;")+'</td>'
+    +'<td style="border:1px solid #ddd;padding:8px;font-family:Arial;font-size:10pt"><b>Date</b><br>'+(esc(v.so_d)||"&nbsp;")+'</td></tr></table>'; }
+  var head='<table width="100%" style="border-collapse:collapse"><tr><td style="background:'+BRAND.color+';color:#fff;padding:14px 16px">'
+    +'<span style="font-family:Arial;font-weight:bold;font-size:15pt">'+esc(BRAND.name)+'</span><br>'
+    +'<span style="font-family:Arial;font-size:9pt">'+esc(BRAND.product)+'</span></td>'
+    +'<td align="right" style="background:'+BRAND.color+';color:#fff;padding:14px 16px;font-family:Arial;font-size:9pt">'+esc(t.title)+'<br>'+date+'</td></tr></table>';
+  return '<html xmlns:o="urn:schemas-microsoft-com:office:office" xmlns:w="urn:schemas-microsoft-com:office:word" xmlns="http://www.w3.org/TR/REC-html40"><head><meta charset="utf-8"><title>'+esc(t.title)+'</title></head>'
+    +'<body style="font-family:Georgia;max-width:720px;margin:0 auto">'+head
+    +'<h2 style="font-family:Arial;color:'+BRAND.color+';font-size:16pt;margin:18px 0 2px">'+esc(t.title)+'</h2>'
+    +'<p style="font-family:Georgia;color:#555;font-size:10.5pt;margin:0 0 6px">'+esc(t.intro)+'</p>'+rows+so
+    +'<p style="font-family:Arial;font-size:8pt;color:#999;margin-top:24px">'+esc(BRAND.name)+' · working template · a consultant’s judgement, captured.</p></body></html>';
+ }
+ function exportDoc(t,v){
+  var html=buildHTML(t,v);
+  var blob=new Blob(["\ufeff",html],{type:"application/msword"});
+  var a=document.createElement("a"); a.href=URL.createObjectURL(blob);
+  a.download=t.title.replace(/[^a-z0-9]+/gi,"-").toLowerCase()+".doc"; a.click();
+ }
+ document.getElementById("tplOpen").onclick=function(){ list(); modal.classList.add("show"); };
+})();
 </script>
 </body>
 </html>
