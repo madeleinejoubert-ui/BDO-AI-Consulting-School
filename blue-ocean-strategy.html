@@ -140,6 +140,8 @@
   .ttip{display:inline-flex;align-items:center;justify-content:center;width:15px;height:15px;border-radius:50%;background:var(--ai);color:#fff;font-size:10px;font-weight:700;font-style:normal;cursor:help;margin-left:6px;position:relative;vertical-align:middle;font-family:var(--display);letter-spacing:0;text-transform:none}
   .ttip::after{content:attr(data-tip);position:absolute;bottom:135%;left:50%;transform:translateX(-50%);background:#11131c;color:#fff;font-family:var(--body);font-weight:400;font-size:12.5px;line-height:1.45;letter-spacing:0;text-transform:none;padding:10px 12px;border-radius:9px;width:250px;max-width:72vw;text-align:left;opacity:0;visibility:hidden;pointer-events:none;transition:opacity .15s;z-index:80;box-shadow:0 10px 28px -8px rgba(0,0,0,.55)}
   .ttip:hover::after,.ttip.show::after{opacity:1;visibility:visible}
+  #resetBtn{background:#ff2424 !important;border-color:#ff2424 !important;color:#fff !important;font-weight:700 !important}
+  #resetBtn:hover{background:#e00d0d !important;border-color:#e00d0d !important}
 </style>
 </head>
 <body>
@@ -780,6 +782,7 @@ render();
   a.download=t.title.replace(/[^a-z0-9]+/gi,"-").toLowerCase()+".doc"; a.click();
  }
  document.getElementById("tplOpen").onclick=function(){ list(); modal.classList.add("show"); };
+ window.__openTpl__=function(id){ open(id); modal.classList.add("show"); };
 })();
 </script>
 
@@ -840,6 +843,44 @@ render();
    var a=document.createElement("a"); a.href=URL.createObjectURL(blob);
    a.download=DOC_TITLE.replace(/[^a-z0-9]+/gi,"-").toLowerCase()+(client?("-"+client.replace(/[^a-z0-9]+/gi,"-").toLowerCase()):"")+".doc"; a.click();
  };
+})();
+</script>
+<style>
+ .rmd-modal{position:fixed;inset:0;background:rgba(20,20,40,.5);z-index:240;display:none;align-items:center;justify-content:center;padding:20px}
+ .rmd-modal.show{display:flex}
+ .rmd-card{background:var(--card,#fff);color:var(--ink,#1d1d1b);border-radius:15px;max-width:430px;width:100%;padding:22px;border:1px solid var(--line,#e5e5ea);font-family:var(--body,Georgia,serif);box-shadow:0 18px 50px -16px rgba(0,0,0,.5)}
+ .rmd-card h4{font-family:var(--display,sans-serif);font-weight:800;font-size:16px;margin:0 0 8px}
+ .rmd-card p{font-size:14px;line-height:1.5;margin:0 0 16px;color:var(--ink-2,#42423f)}
+ .rmd-row{display:flex;gap:10px;justify-content:flex-end;flex-wrap:wrap}
+ .rmd-btn{font-family:var(--display,sans-serif);font-weight:700;font-size:13px;border-radius:9px;padding:10px 16px;cursor:pointer;border:1px solid var(--line-2,#d4d4dc);background:#fff;color:var(--ink,#1d1d1b)}
+ .rmd-btn.go{background:var(--pop,#E81A3B);border-color:var(--pop,#E81A3B);color:#fff}
+</style>
+<div class="rmd-modal" id="rmdModal"><div class="rmd-card" id="rmdCard"></div></div>
+<script>
+(function(){
+ var MAX=4, STAGE_TPL={"0": "bo1", "1": "bo2", "2": "bo3", "3": "bo4"}, TITLES={"bo1": "As-Is factor review", "bo2": "Path & noncustomer decision", "bo3": "ERRC sign-off", "bo4": "Value-curve test"};
+ var reminded={};
+ function tplEmpty(id){ try{ var v=JSON.parse(localStorage.getItem("tpl:"+id)); if(!v) return true; for(var k in v){ if(v[k]&&(""+v[k]).trim()) return false; } return true; }catch(e){ return true; } }
+ var modal=document.getElementById("rmdModal"), card=document.getElementById("rmdCard");
+ function advance(){ if(typeof cur==="undefined")return; cur=Math.min(MAX,cur+1); if(typeof maxReached!=="undefined"){maxReached=Math.max(maxReached,cur);} if(typeof render==="function")render(); }
+ function showReminder(stage,id){
+   card.innerHTML='<h4>One thing before you move on</h4>'
+    +'<p>You haven\'t filled the <b>'+(TITLES[id]||"working template")+'</b> for this step yet. It feeds your final engagement report \u2014 open it now, or carry on and come back to it.</p>'
+    +'<div class="rmd-row"><button class="rmd-btn" id="rmd_skip">Continue anyway</button><button class="rmd-btn go" id="rmd_open">Open the template</button></div>';
+   modal.classList.add("show");
+   document.getElementById("rmd_open").onclick=function(){ reminded[stage]=true; modal.classList.remove("show"); if(window.__openTpl__) window.__openTpl__(id); };
+   document.getElementById("rmd_skip").onclick=function(){ reminded[stage]=true; modal.classList.remove("show"); advance(); };
+ }
+ document.addEventListener("click", function(e){
+   var btn=e.target.closest(".navbtns button"); if(!btn) return;
+   if(!/Next/.test(btn.textContent||"")) return;
+   if(typeof cur==="undefined") return;
+   var id=STAGE_TPL[cur]; if(!id) return;
+   if(reminded[cur]) return;
+   if(!tplEmpty(id)) return;
+   e.preventDefault(); e.stopPropagation();
+   showReminder(cur,id);
+ }, true);
 })();
 </script></body>
 </html>

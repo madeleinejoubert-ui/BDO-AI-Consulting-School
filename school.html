@@ -349,6 +349,9 @@
   .adcap{font-family:var(--mono);font-size:11px;color:var(--muted)}
   .adcap .o{color:var(--gate);font-weight:600}
   @media (max-width:900px){ .adgrid{grid-template-columns:1fr} .augdetail{margin:2px 0 8px} }
+  .ttip{display:inline-flex;align-items:center;justify-content:center;width:15px;height:15px;border-radius:50%;background:var(--ai,#22409A);color:#fff;font-size:10px;font-weight:700;font-style:normal;cursor:help;margin-left:5px;position:relative;vertical-align:middle;font-family:var(--display);letter-spacing:0;text-transform:none}
+  .ttip::after{content:attr(data-tip);position:absolute;bottom:135%;left:50%;transform:translateX(-50%);background:#11131c;color:#fff;font-family:var(--body);font-weight:400;font-size:12.5px;line-height:1.45;letter-spacing:0;text-transform:none;padding:10px 12px;border-radius:9px;width:250px;max-width:72vw;text-align:left;opacity:0;visibility:hidden;pointer-events:none;transition:opacity .15s;z-index:80;box-shadow:0 10px 28px -8px rgba(0,0,0,.55)}
+  .ttip:hover::after,.ttip.show::after{opacity:1;visibility:visible}
 </style>
 </head>
 <body>
@@ -3193,5 +3196,134 @@ Benchmark portfolio performance against industry peers."</pre>
 })();
 </script>
 
+<script>
+(function(){
+ var G={
+  "MECE":"Mutually Exclusive, Collectively Exhaustive — break a problem into parts that do not overlap and together cover everything.",
+  "TRIZ":"A structured inventive problem-solving method that resolves trade-offs using proven patterns rather than compromise.",
+  "ERRC":"Eliminate, Reduce, Raise, Create — the four moves that reshape a value curve.",
+  "ADKAR":"Awareness, Desire, Knowledge, Ability, Reinforcement — a change model for moving people through change.",
+  "FRAME":"The platform pattern for structuring an AI-assisted task so a human can review and own the result.",
+  "CAS":"Complex Adaptive Systems — many interacting agents whose behaviour emerges and cannot be fully predicted or controlled.",
+  "DMADV":"Define, Measure, Analyse, Design, Verify — the Design for Six Sigma method for creating new processes.",
+  "DMAIC":"Define, Measure, Analyse, Improve, Control — the Six Sigma method for improving an existing process.",
+  "SCQA":"Situation, Complication, Question, Answer — a structure for framing a clear, persuasive narrative.",
+  "TOC":"Theory of Constraints — find and fix the single biggest bottleneck limiting the whole system.",
+  "RCA":"Root Cause Analysis — trace a problem back to its underlying cause rather than its symptoms.",
+  "JTBD":"Jobs to be Done — the progress a customer is really trying to make; the job they hire a product to do."
+ };
+ document.addEventListener("click",function(e){var t=e.target.closest(".ttip");document.querySelectorAll(".ttip.show").forEach(function(x){if(x!==t)x.classList.remove("show");});if(t){e.stopPropagation();t.classList.toggle("show");}});
+ function badge(k){var s=document.createElement("span");s.className="ttip";s.setAttribute("data-tip",G[k]);s.setAttribute("role","button");s.setAttribute("tabindex","0");s.setAttribute("aria-label",k+" explained");s.textContent="i";return s;}
+ function run(){
+  var skip={SCRIPT:1,STYLE:1,A:1,BUTTON:1,INPUT:1,TEXTAREA:1,CODE:1,PRE:1,H1:1};
+  var w=document.createTreeWalker(document.body,NodeFilter.SHOW_TEXT,{acceptNode:function(n){
+   if(!n.nodeValue||!/[A-Z]{2,}/.test(n.nodeValue))return NodeFilter.FILTER_REJECT;
+   var p=n.parentNode;
+   while(p&&p!==document.body){ if(skip[p.nodeName])return NodeFilter.FILTER_REJECT; if(p.classList&&(p.classList.contains("ttip")||p.classList.contains("augwrap")||p.classList.contains("node")))return NodeFilter.FILTER_REJECT; p=p.parentNode; }
+   return NodeFilter.FILTER_ACCEPT; }});
+  var nodes=[],n; while(n=w.nextNode())nodes.push(n);
+  var done={}, keys=Object.keys(G);
+  nodes.forEach(function(node){ keys.forEach(function(k){ if(done[k])return;
+   var m=new RegExp("\\b"+k+"\\b").exec(node.nodeValue);
+   if(m){ done[k]=1; var after=node.splitText(m.index+k.length); node.parentNode.insertBefore(badge(k),after); } }); });
+ }
+ if(document.readyState==="complete")run(); else window.addEventListener("load",run);
+})();
+</script>
+
+<style>
+ .cpd-fab{position:fixed;left:20px;bottom:20px;z-index:90;background:var(--ai,#22409A);color:#fff;border:none;border-radius:11px;
+   font-family:var(--display,sans-serif);font-weight:700;font-size:13px;padding:11px 16px;cursor:pointer;box-shadow:0 10px 24px -10px rgba(0,0,0,.5)}
+ .cpd-fab:hover{filter:brightness(1.08)}
+ .cpd-modal{position:fixed;inset:0;background:rgba(20,20,40,.55);z-index:200;display:none;align-items:center;justify-content:center;padding:20px}
+ .cpd-modal.show{display:flex}
+ .cpd-card{background:var(--card,#fff);color:var(--ink,#1d1d1b);border-radius:16px;max-width:660px;width:100%;max-height:88vh;overflow:auto;padding:24px;border:1px solid var(--line,#e5e5ea);font-family:var(--body,Georgia,serif)}
+ .cpd-card h3{font-family:var(--display,sans-serif);font-weight:800;font-size:20px;margin:0 0 4px}
+ .cpd-card .sub{font-family:var(--mono,monospace);font-size:12px;color:var(--muted,#6c6c75);margin:0 0 16px}
+ .cpd-card label{font-family:var(--display,sans-serif);font-weight:700;font-size:13px;display:block;margin:14px 0 6px}
+ .cpd-card input[type=text],.cpd-card textarea{width:100%;border:1px solid var(--line-2,#d4d4dc);border-radius:9px;padding:10px;font-family:var(--body,Georgia,serif);font-size:14px}
+ .cpd-card textarea{min-height:64px;resize:vertical}
+ .cpd-q{margin:12px 0;padding:12px;border:1px solid var(--line,#e5e5ea);border-radius:10px}
+ .cpd-q p{font-family:var(--display,sans-serif);font-weight:700;font-size:14px;margin:0 0 8px}
+ .cpd-q label{font-family:var(--body,Georgia,serif);font-weight:400;display:flex;gap:8px;align-items:flex-start;margin:6px 0;cursor:pointer}
+ .cpd-q.right{border-color:#1f9d57;background:#f0faf4}.cpd-q.wrong{border-color:#e23744;background:#fdeef0}
+ .cpd-row{display:flex;gap:10px;justify-content:flex-end;margin-top:18px;flex-wrap:wrap}
+ .cpd-btn{font-family:var(--display,sans-serif);font-weight:700;font-size:13px;border-radius:9px;padding:10px 16px;cursor:pointer;border:1px solid var(--line-2,#d4d4dc);background:#fff;color:var(--ink,#1d1d1b)}
+ .cpd-btn.go{background:var(--pop,#E81A3B);border-color:var(--pop,#E81A3B);color:#fff}
+ .cpd-record h2{font-family:var(--display,sans-serif);font-size:20px;margin:0 0 2px}
+ .cpd-record .rmeta{font-family:var(--mono,monospace);font-size:12px;color:var(--muted,#6c6c75);margin:0 0 14px}
+ .cpd-record .rline{display:flex;justify-content:space-between;border-top:1px solid var(--line,#e5e5ea);padding:8px 0;font-size:13px}
+ .cpd-record .rsec{font-family:var(--display,sans-serif);font-weight:700;font-size:12px;letter-spacing:.05em;text-transform:uppercase;color:var(--pop,#E81A3B);margin:16px 0 6px}
+ .cpd-record .rtext{font-family:var(--body,Georgia,serif);font-size:13.5px;line-height:1.5;white-space:pre-wrap;margin:0 0 8px}
+ @media print{ body.cpd-print > *{display:none !important;} body.cpd-print #cpdRecordOverlay{display:flex !important;position:static;background:#fff;padding:0} body.cpd-print .cpd-card{box-shadow:none;border:none;max-height:none} body.cpd-print .cpd-row{display:none} }
+</style>
+<button class="cpd-fab" id="cpdOpen">✓ Log your CPD</button>
+<div class="cpd-modal" id="cpdModal"><div class="cpd-card" id="cpdBody"></div></div>
+<div class="cpd-modal" id="cpdRecordOverlay"><div class="cpd-card cpd-record" id="cpdRecordBody"></div></div>
+<script>
+(function(){
+ var CFG={"module": "Consulting Methodology School", "hours": 1.0, "prompts": ["What is the most useful thing you learned or applied here?", "How will you use this on a live client engagement?", "Where will you keep a human judgement or sign-off in control?"], "quiz": [{"q": "On the Augmentation Line, what sits BELOW the line?", "o": ["Raw AI output", "Human judgement and the decision", "Automated reporting"], "a": 1}, {"q": "A red (gate) point in a method means…", "o": ["A named human must sign off before proceeding", "The step is optional", "AI has finished"], "a": 0}, {"q": "MECE stands for…", "o": ["Measured, Evaluated, Compared, Examined", "Mutually Exclusive, Collectively Exhaustive", "Modular, Efficient, Clear, Effective"], "a": 1}]};
+ var KEY="cpd:"+CFG.module;
+ function load(){ try{return JSON.parse(localStorage.getItem(KEY))||{};}catch(e){return {};} }
+ function save(d){ try{localStorage.setItem(KEY,JSON.stringify(d));}catch(e){} }
+ function esc(s){return (s||"").replace(/&/g,"&amp;").replace(/</g,"&lt;").replace(/>/g,"&gt;");}
+ var st=load();
+ var modal=document.getElementById("cpdModal"), body=document.getElementById("cpdBody");
+ function render(){
+  var h='<h3>Reflect &amp; log your CPD</h3><div class="sub">'+esc(CFG.module)+' · '+CFG.hours+' CPD hour'+(CFG.hours==1?'':'s')+'</div>';
+  h+='<label>Your name</label><input type="text" id="cpd_name" value="'+esc(st.name||"")+'" placeholder="For your certificate">';
+  CFG.prompts.forEach(function(p,i){ h+='<label>'+esc(p)+'</label><textarea id="cpd_r'+i+'">'+esc((st.reflections||[])[i]||"")+'</textarea>'; });
+  h+='<label style="margin-top:18px">Quick knowledge check</label>';
+  CFG.quiz.forEach(function(q,qi){ h+='<div class="cpd-q" id="cpd_q'+qi+'"><p>'+(qi+1)+'. '+esc(q.q)+'</p>';
+    q.o.forEach(function(opt,oi){ h+='<label><input type="radio" name="cpd_q'+qi+'" value="'+oi+'"> '+esc(opt)+'</label>'; });
+    h+='</div>'; });
+  h+='<div class="cpd-row"><button class="cpd-btn" id="cpd_cancel">Close</button><button class="cpd-btn go" id="cpd_gen">Generate CPD record</button></div>';
+  body.innerHTML=h;
+  document.getElementById("cpd_cancel").onclick=function(){ modal.classList.remove("show"); };
+  document.getElementById("cpd_gen").onclick=generate;
+ }
+ function collect(){
+  var name=document.getElementById("cpd_name").value.trim();
+  var refl=CFG.prompts.map(function(_,i){return document.getElementById("cpd_r"+i).value.trim();});
+  var ans=CFG.quiz.map(function(_,qi){var s=document.querySelector('input[name="cpd_q'+qi+'"]:checked');return s?+s.value:-1;});
+  return {name:name,reflections:refl,answers:ans};
+ }
+ function generate(){
+  var d=collect();
+  if(!d.name){ alert("Please add your name for the certificate."); return; }
+  if(d.reflections.some(function(r){return !r;})){ alert("Please complete all three reflections — they are your CPD evidence."); return; }
+  if(d.answers.some(function(a){return a<0;})){ alert("Please answer all knowledge-check questions."); return; }
+  // mark quiz
+  var score=0; CFG.quiz.forEach(function(q,qi){ var el=document.getElementById("cpd_q"+qi); el.classList.remove("right","wrong"); if(d.answers[qi]===q.a){score++;el.classList.add("right");}else{el.classList.add("wrong");} });
+  st={name:d.name,reflections:d.reflections,answers:d.answers,date:new Date().toISOString()}; save(st);
+  // append to CPD log
+  try{ var log=JSON.parse(localStorage.getItem("cpdLog")||"[]"); log.push({module:CFG.module,hours:CFG.hours,date:st.date,name:d.name,score:score+"/"+CFG.quiz.length}); localStorage.setItem("cpdLog",JSON.stringify(log)); }catch(e){}
+  showRecord(d,score);
+ }
+ function showRecord(d,score){
+  var rb=document.getElementById("cpdRecordBody"), ov=document.getElementById("cpdRecordOverlay");
+  var dt=new Date().toLocaleDateString("en-GB",{day:"numeric",month:"long",year:"numeric"});
+  var h='<h2>CPD Record</h2><div class="rmeta">Continuing Professional Development · self-recorded</div>';
+  h+='<div class="rline"><span>Learner</span><strong>'+esc(d.name)+'</strong></div>';
+  h+='<div class="rline"><span>Activity</span><strong>'+esc(CFG.module)+'</strong></div>';
+  h+='<div class="rline"><span>CPD hours</span><strong>'+CFG.hours+'</strong></div>';
+  h+='<div class="rline"><span>Knowledge check</span><strong>'+score+' / '+CFG.quiz.length+'</strong></div>';
+  h+='<div class="rline"><span>Date</span><strong>'+dt+'</strong></div>';
+  h+='<div class="rsec">Reflections</div>';
+  CFG.prompts.forEach(function(p,i){ h+='<div class="rtext"><em>'+esc(p)+'</em>\n'+esc(d.reflections[i])+'</div>'; });
+  h+='<div class="rsec">Verification</div><div class="rtext">Recorded via the platform learning module. Retain for your CPD log or professional body.</div>';
+  h+='<div class="cpd-row"><button class="cpd-btn" id="cpd_rclose">Close</button><button class="cpd-btn" id="cpd_dl">Download</button><button class="cpd-btn go" id="cpd_print">Print / Save as PDF</button></div>';
+  rb.innerHTML=h; modal.classList.remove("show"); ov.classList.add("show");
+  document.getElementById("cpd_rclose").onclick=function(){ ov.classList.remove("show"); };
+  document.getElementById("cpd_print").onclick=function(){ document.body.classList.add("cpd-print"); window.print(); };
+  window.addEventListener("afterprint",function(){ document.body.classList.remove("cpd-print"); });
+  document.getElementById("cpd_dl").onclick=function(){
+    var html='<!doctype html><meta charset="utf-8"><title>CPD Record</title><body style="font-family:Georgia,serif;max-width:640px;margin:40px auto;padding:0 20px">'+rb.innerHTML.replace(/<div class="cpd-row[\s\S]*?<\/div>\s*$/,'')+'</body>';
+    var b=new Blob([html],{type:"text/html"}); var a=document.createElement("a"); a.href=URL.createObjectURL(b); a.download="CPD-record-"+CFG.module.replace(/[^a-z0-9]+/gi,"-").toLowerCase()+".html"; a.click();
+  };
+ }
+ document.getElementById("cpdOpen").onclick=function(){ render(); modal.classList.add("show"); };
+})();
+</script>
 </body>
 </html>

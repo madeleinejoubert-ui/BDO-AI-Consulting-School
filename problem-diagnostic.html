@@ -130,6 +130,8 @@
   .docbox .dhd .fn{color:var(--pop)} .docbox .dhd .cc{margin-left:auto;font-family:var(--mono);font-size:10.5px;color:var(--muted);font-weight:400}
   .docbox .dhd .rm{border:none;background:transparent;color:var(--muted);cursor:pointer;font-size:14px} .docbox .dhd .rm:hover{color:var(--gate)}
   .docbox textarea{min-height:120px}
+  #resetBtn{background:#ff2424 !important;border-color:#ff2424 !important;color:#fff !important;font-weight:700 !important}
+  #resetBtn:hover{background:#e00d0d !important;border-color:#e00d0d !important}
 </style>
 </head>
 <body>
@@ -573,6 +575,7 @@ if(S.result) showResults(S.result);
   a.download=t.title.replace(/[^a-z0-9]+/gi,"-").toLowerCase()+".doc"; a.click();
  }
  document.getElementById("tplOpen").onclick=function(){ list(); modal.classList.add("show"); };
+ window.__openTpl__=function(id){ open(id); modal.classList.add("show"); };
 })();
 </script>
 
