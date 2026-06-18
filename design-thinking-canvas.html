@@ -914,5 +914,58 @@ render();
  document.getElementById("tplOpen").onclick=function(){ list(); modal.classList.add("show"); };
 })();
 </script>
-</body>
+
+<style>
+ .rep-fab{position:fixed;left:20px;bottom:108px;z-index:90;background:#1d1d1b;color:#fff;border:none;border-radius:11px;
+   font-family:var(--display,sans-serif);font-weight:700;font-size:13px;padding:11px 16px;cursor:pointer;box-shadow:0 10px 24px -10px rgba(0,0,0,.55)}
+ .rep-fab:hover{filter:brightness(1.25)}
+</style>
+<button class="rep-fab" id="repOpen">📊 Generate report</button>
+<script>
+(function(){
+ var BRAND={"name": "BDO", "product": "AI-Augmented Consulting", "color": "#E81A3B"}, TDEFS=[{"id": "dt1", "title": "Empathy & insight", "signoff": false, "fields": [{"l": "Who we spoke to / observed"}, {"l": "What they actually do and feel"}, {"l": "The surprising insight"}, {"l": "The real, underlying need"}]}, {"id": "dt2", "title": "Problem-framing sign-off", "signoff": true, "fields": [{"l": "Point-of-view / problem statement"}, {"l": "Who owns this problem"}, {"l": "What 'done' looks like"}, {"l": "Key assumptions we're making"}]}, {"id": "dt3", "title": "Idea selection", "signoff": false, "fields": [{"l": "Ideas generated"}, {"l": "Selection criteria"}, {"l": "Ideas we'll test, and why"}, {"l": "Ideas parked (and why)"}]}, {"id": "dt4", "title": "Prototype plan", "signoff": false, "fields": [{"l": "What we're trying to learn"}, {"l": "The cheapest prototype that tests it"}, {"l": "What success and failure will look like"}]}, {"id": "dt5", "title": "Test learning & decision", "signoff": false, "fields": [{"l": "What we tested"}, {"l": "What we learned"}, {"l": "Decision: persevere / pivot / stop"}, {"l": "The next step"}]}];
+ function esc(s){ s=(s==null?'':''+s); return s.replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;'); }
+ function getTpl(id){ try{return JSON.parse(localStorage.getItem("tpl:"+id))||{};}catch(e){return {};} }
+ function fld(l,v){ var val=esc(v).replace(/\n/g,'<br>'); return '<p style="font-family:Arial;font-weight:bold;font-size:10.5pt;color:#333;margin:10px 0 2px">'+esc(l)+'</p><p style="font-family:Georgia;font-size:11pt;color:#111;margin:0;white-space:pre-wrap">'+(val||'<span style="color:#bbb">— not yet completed —</span>')+'</p>'; }
+ function sec(n,t){ return '<h2 style="font-family:Arial;font-size:14pt;color:'+BRAND.color+';border-bottom:1px solid #eee;padding-bottom:4px;margin:22px 0 8px">'+n+'. '+esc(t)+'</h2>'; }
+ function exec(html){ return '<table width="100%" style="border-collapse:collapse;margin:10px 0 6px"><tr><td style="background:#f6f6f9;border-left:4px solid '+BRAND.color+';padding:12px 14px;font-family:Georgia;font-size:11pt;color:#222">'+html+'</td></tr></table>'; }
+ function tplAppendix(){ var h='<h2 style="font-family:Arial;font-size:14pt;color:'+BRAND.color+';border-bottom:1px solid #eee;padding-bottom:4px;margin:22px 0 8px">Appendix — Working templates &amp; sign-offs</h2>';
+   TDEFS.forEach(function(t){ var v=getTpl(t.id);
+     h+='<h3 style="font-family:Arial;font-size:12pt;color:#222;margin:14px 0 2px">'+esc(t.title)+'</h3>';
+     t.fields.forEach(function(f,i){ h+=fld(f.l, v["f"+i]); });
+     if(t.signoff){ h+=fld("Signed off", (v.so_n||"—")+"     ·     "+(v.so_r||"")+"     ·     "+(v.so_d||"")); }
+   }); return h; }
+ 
+ var DOC_TITLE="Design Thinking — Engagement Report";
+ function buildBody(){
+  var em=S.empathise||{}, de=S.define||{}, id=S.ideate||{}, pr=S.prototype||{}, te=S.test||{};
+  var b=exec('<b>Problem framed:</b> '+(esc(de.chosenPov)||'\u2014')+'<br><b>Test decision:</b> '+(esc(te.signal)||esc(te.synthesis)||'\u2014'));
+  b+=sec(1,'Empathise — what we learned')+fld('Human read of the user',em.humanRead)
+    +fld('Says / Thinks',[em.says,em.thinks].filter(Boolean).join('  /  '))+fld('Does / Feels',[em.does,em.feels].filter(Boolean).join('  /  '))
+    +fld('Pains',em.pains)+fld('Gains',em.gains);
+  b+=sec(2,'Define — the problem')+fld('Clusters / insights',de.clusters)+fld('Chosen point of view',de.chosenPov);
+  if(de.gateOn) b+=fld('Framing signed off by',de.gateWho);
+  b+=sec(3,'Ideate')+fld('Chosen "How might we"',id.chosenHmw)+fld('Ideas to test',((id.picks&&id.picks.length)?id.picks:(id.ideas||[])).join('\n'));
+  b+=sec(4,'Prototype')+fld('Riskiest assumption',pr.risky)+fld('What we built',pr.proto)+fld('How we tested',pr.tests)+fld('Decision',pr.decision);
+  b+=sec(5,'Test — learning & decision')+fld('Plan',te.plan)+fld('Feedback',te.feedback)+fld('Synthesis',te.synthesis)+fld('Signal / decision',te.signal);
+  return b;
+ }
+
+ function makeDoc(title,client,body){
+   var date=new Date().toLocaleDateString("en-GB",{day:"numeric",month:"long",year:"numeric"});
+   var cover='<table width="100%" style="border-collapse:collapse"><tr><td style="background:'+BRAND.color+';padding:18px 20px"><span style="font-family:Arial;font-weight:bold;font-size:16pt;color:#fff">'+esc(BRAND.name)+'</span><span style="font-family:Arial;font-size:9pt;color:#fff"> · '+esc(BRAND.product)+'</span></td></tr></table>';
+   var head='<h1 style="font-family:Arial;font-size:22pt;color:'+BRAND.color+';margin:22px 0 2px">'+esc(title)+'</h1><p style="font-family:Arial;font-size:11pt;color:#444;margin:0 0 2px">Prepared for: <b>'+(esc(client)||"—")+'</b></p><p style="font-family:Arial;font-size:10pt;color:#888;margin:0 0 4px">'+date+'</p><hr style="border:none;border-top:2px solid '+BRAND.color+'">';
+   var gov=exec('<b>Governance:</b> this analysis was AI-assisted and reviewed by a named consultant. Human judgement and sign-off were retained at every gate, in line with the platform augmentation principle.');
+   var foot='<hr style="border:none;border-top:1px solid #ddd;margin-top:26px"><p style="font-family:Arial;font-size:8pt;color:#999">'+esc(BRAND.name)+' · Engagement report · AI-assisted analysis with human judgement retained at every gate.</p>';
+   return '<html xmlns:o="urn:schemas-microsoft-com:office:office" xmlns:w="urn:schemas-microsoft-com:office:word" xmlns="http://www.w3.org/TR/REC-html40"><head><meta charset="utf-8"><title>'+esc(title)+'</title></head><body style="font-family:Georgia;max-width:760px;margin:0 auto;padding:0 10px">'+cover+head+gov+body+tplAppendix()+foot+'</body></html>';
+ }
+ document.getElementById("repOpen").onclick=function(){
+   var client=(typeof S!=="undefined"&&S&&S.client)?S.client:(window.prompt("Client name for this report (optional):","")||"");
+   var html=makeDoc(DOC_TITLE, client, buildBody());
+   var blob=new Blob(["\ufeff",html],{type:"application/msword"});
+   var a=document.createElement("a"); a.href=URL.createObjectURL(blob);
+   a.download=DOC_TITLE.replace(/[^a-z0-9]+/gi,"-").toLowerCase()+(client?("-"+client.replace(/[^a-z0-9]+/gi,"-").toLowerCase()):"")+".doc"; a.click();
+ };
+})();
+</script></body>
 </html>

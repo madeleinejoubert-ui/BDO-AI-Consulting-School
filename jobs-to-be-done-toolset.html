@@ -686,5 +686,61 @@ render();
  document.getElementById("tplOpen").onclick=function(){ list(); modal.classList.add("show"); };
 })();
 </script>
-</body>
+
+<style>
+ .rep-fab{position:fixed;left:20px;bottom:108px;z-index:90;background:#1d1d1b;color:#fff;border:none;border-radius:11px;
+   font-family:var(--display,sans-serif);font-weight:700;font-size:13px;padding:11px 16px;cursor:pointer;box-shadow:0 10px 24px -10px rgba(0,0,0,.55)}
+ .rep-fab:hover{filter:brightness(1.25)}
+</style>
+<button class="rep-fab" id="repOpen">📊 Generate report</button>
+<script>
+(function(){
+ var BRAND={"name": "BDO", "product": "AI-Augmented Consulting", "color": "#E81A3B"}, TDEFS=[{"id": "jt1", "title": "Job statement", "signoff": false, "fields": [{"l": "When… I want to… so I can…"}, {"l": "Functional, emotional & social dimensions"}, {"l": "Who has this job"}]}, {"id": "jt2", "title": "Forces of progress", "signoff": false, "fields": [{"l": "Push of the current situation"}, {"l": "Pull of the new solution"}, {"l": "Habit / anxiety of the old"}, {"l": "Anxiety of the new"}, {"l": "Net read on the forces"}]}, {"id": "jt3", "title": "Opportunity decision", "signoff": false, "fields": [{"l": "Top opportunities (importance vs satisfaction)"}, {"l": "Where need most outruns satisfaction"}, {"l": "Where we'll focus, and why"}]}, {"id": "jt4", "title": "Switch-interview guide", "signoff": false, "fields": [{"l": "The switch moment to explore"}, {"l": "Questions to ask"}, {"l": "What strong evidence looks like"}]}];
+ function esc(s){ s=(s==null?'':''+s); return s.replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;'); }
+ function getTpl(id){ try{return JSON.parse(localStorage.getItem("tpl:"+id))||{};}catch(e){return {};} }
+ function fld(l,v){ var val=esc(v).replace(/\n/g,'<br>'); return '<p style="font-family:Arial;font-weight:bold;font-size:10.5pt;color:#333;margin:10px 0 2px">'+esc(l)+'</p><p style="font-family:Georgia;font-size:11pt;color:#111;margin:0;white-space:pre-wrap">'+(val||'<span style="color:#bbb">— not yet completed —</span>')+'</p>'; }
+ function sec(n,t){ return '<h2 style="font-family:Arial;font-size:14pt;color:'+BRAND.color+';border-bottom:1px solid #eee;padding-bottom:4px;margin:22px 0 8px">'+n+'. '+esc(t)+'</h2>'; }
+ function exec(html){ return '<table width="100%" style="border-collapse:collapse;margin:10px 0 6px"><tr><td style="background:#f6f6f9;border-left:4px solid '+BRAND.color+';padding:12px 14px;font-family:Georgia;font-size:11pt;color:#222">'+html+'</td></tr></table>'; }
+ function tplAppendix(){ var h='<h2 style="font-family:Arial;font-size:14pt;color:'+BRAND.color+';border-bottom:1px solid #eee;padding-bottom:4px;margin:22px 0 8px">Appendix — Working templates &amp; sign-offs</h2>';
+   TDEFS.forEach(function(t){ var v=getTpl(t.id);
+     h+='<h3 style="font-family:Arial;font-size:12pt;color:#222;margin:14px 0 2px">'+esc(t.title)+'</h3>';
+     t.fields.forEach(function(f,i){ h+=fld(f.l, v["f"+i]); });
+     if(t.signoff){ h+=fld("Signed off", (v.so_n||"—")+"     ·     "+(v.so_r||"")+"     ·     "+(v.so_d||"")); }
+   }); return h; }
+ 
+ var DOC_TITLE="Jobs to be Done — Engagement Report";
+ function buildBody(){
+  var jo=S.job||{}, fo=S.forces||{}, ta=S.target||{}, iv=S.interview||{}, oc=S.outcomes||[];
+  var jobline=[jo.situation,jo.motivation,jo.outcome].filter(Boolean).join('  \u2192  ');
+  var b=exec('<b>The job:</b> '+(esc(jobline)||'\u2014')+'<br><b>Where we will focus:</b> '+(esc(ta.chosen)||'\u2014'));
+  b+=sec(1,'The job to be done')+fld('When… / Situation',jo.situation)+fld('I want to… / Motivation',jo.motivation)+fld('So I can… / Outcome',jo.outcome)
+    +fld('Functional / Emotional / Social',[jo.functional,jo.emotional,jo.social].filter(Boolean).join('  \u00b7  '))+fld('Current contenders',jo.contenders);
+  b+=sec(2,'Forces of progress')+fld('Push of the situation',fo.push)+fld('Pull of the new',fo.pull)+fld('Habit of the present',fo.habit)+fld('Anxiety of the new',fo.anxiety);
+  b+=sec(3,'Opportunities');
+  if(oc.length){ b+='<table width="100%" style="border-collapse:collapse;font-family:Arial;font-size:10pt"><tr><th style="text-align:left;border-bottom:2px solid #ccc;padding:5px">Outcome</th><th style="border-bottom:2px solid #ccc;padding:5px">Imp.</th><th style="border-bottom:2px solid #ccc;padding:5px">Sat.</th><th style="border-bottom:2px solid #ccc;padding:5px">Opp.</th></tr>';
+    oc.forEach(function(o){ var imp=+o.imp,sat=+o.sat,opp=imp+Math.max(imp-sat,0); b+='<tr><td style="padding:5px;border-bottom:1px solid #eee">'+esc(o.text||'')+'</td><td align="center" style="padding:5px;border-bottom:1px solid #eee">'+(o.imp!=null?o.imp:'\u2014')+'</td><td align="center" style="padding:5px;border-bottom:1px solid #eee">'+(o.sat!=null?o.sat:'\u2014')+'</td><td align="center" style="padding:5px;border-bottom:1px solid #eee;font-weight:bold;color:'+BRAND.color+'">'+(isFinite(opp)?opp.toFixed(1):'\u2014')+'</td></tr>'; });
+    b+='</table>'; } else { b+=fld('Opportunities',''); }
+  b+=sec(4,'Target & next step')+fld('Where we will focus',ta.chosen);
+  if(ta.gateOn) b+=fld('Focus signed off by',ta.who);
+  b+=fld('Switch-interview guide',iv.guide);
+  return b;
+ }
+
+ function makeDoc(title,client,body){
+   var date=new Date().toLocaleDateString("en-GB",{day:"numeric",month:"long",year:"numeric"});
+   var cover='<table width="100%" style="border-collapse:collapse"><tr><td style="background:'+BRAND.color+';padding:18px 20px"><span style="font-family:Arial;font-weight:bold;font-size:16pt;color:#fff">'+esc(BRAND.name)+'</span><span style="font-family:Arial;font-size:9pt;color:#fff"> · '+esc(BRAND.product)+'</span></td></tr></table>';
+   var head='<h1 style="font-family:Arial;font-size:22pt;color:'+BRAND.color+';margin:22px 0 2px">'+esc(title)+'</h1><p style="font-family:Arial;font-size:11pt;color:#444;margin:0 0 2px">Prepared for: <b>'+(esc(client)||"—")+'</b></p><p style="font-family:Arial;font-size:10pt;color:#888;margin:0 0 4px">'+date+'</p><hr style="border:none;border-top:2px solid '+BRAND.color+'">';
+   var gov=exec('<b>Governance:</b> this analysis was AI-assisted and reviewed by a named consultant. Human judgement and sign-off were retained at every gate, in line with the platform augmentation principle.');
+   var foot='<hr style="border:none;border-top:1px solid #ddd;margin-top:26px"><p style="font-family:Arial;font-size:8pt;color:#999">'+esc(BRAND.name)+' · Engagement report · AI-assisted analysis with human judgement retained at every gate.</p>';
+   return '<html xmlns:o="urn:schemas-microsoft-com:office:office" xmlns:w="urn:schemas-microsoft-com:office:word" xmlns="http://www.w3.org/TR/REC-html40"><head><meta charset="utf-8"><title>'+esc(title)+'</title></head><body style="font-family:Georgia;max-width:760px;margin:0 auto;padding:0 10px">'+cover+head+gov+body+tplAppendix()+foot+'</body></html>';
+ }
+ document.getElementById("repOpen").onclick=function(){
+   var client=(typeof S!=="undefined"&&S&&S.client)?S.client:(window.prompt("Client name for this report (optional):","")||"");
+   var html=makeDoc(DOC_TITLE, client, buildBody());
+   var blob=new Blob(["\ufeff",html],{type:"application/msword"});
+   var a=document.createElement("a"); a.href=URL.createObjectURL(blob);
+   a.download=DOC_TITLE.replace(/[^a-z0-9]+/gi,"-").toLowerCase()+(client?("-"+client.replace(/[^a-z0-9]+/gi,"-").toLowerCase()):"")+".doc"; a.click();
+ };
+})();
+</script></body>
 </html>

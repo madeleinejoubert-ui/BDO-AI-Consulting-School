@@ -575,5 +575,57 @@ if(S.result) showResults(S.result);
  document.getElementById("tplOpen").onclick=function(){ list(); modal.classList.add("show"); };
 })();
 </script>
-</body>
+
+<style>
+ .rep-fab{position:fixed;left:20px;bottom:108px;z-index:90;background:#1d1d1b;color:#fff;border:none;border-radius:11px;
+   font-family:var(--display,sans-serif);font-weight:700;font-size:13px;padding:11px 16px;cursor:pointer;box-shadow:0 10px 24px -10px rgba(0,0,0,.55)}
+ .rep-fab:hover{filter:brightness(1.25)}
+</style>
+<button class="rep-fab" id="repOpen">📊 Generate report</button>
+<script>
+(function(){
+ var BRAND={"name": "BDO", "product": "AI-Augmented Consulting", "color": "#E81A3B"}, TDEFS=[{"id": "dg1", "title": "Engagement framing & recommendation sign-off", "signoff": true, "fields": [{"l": "Problem, in the client's words"}, {"l": "Domain & archetype"}, {"l": "Recommended methods (lead + supporting)"}, {"l": "Where we'll start, given the stage"}, {"l": "Gate intensity & why"}, {"l": "Human-landing note — bringing people through"}]}];
+ function esc(s){ s=(s==null?'':''+s); return s.replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;'); }
+ function getTpl(id){ try{return JSON.parse(localStorage.getItem("tpl:"+id))||{};}catch(e){return {};} }
+ function fld(l,v){ var val=esc(v).replace(/\n/g,'<br>'); return '<p style="font-family:Arial;font-weight:bold;font-size:10.5pt;color:#333;margin:10px 0 2px">'+esc(l)+'</p><p style="font-family:Georgia;font-size:11pt;color:#111;margin:0;white-space:pre-wrap">'+(val||'<span style="color:#bbb">— not yet completed —</span>')+'</p>'; }
+ function sec(n,t){ return '<h2 style="font-family:Arial;font-size:14pt;color:'+BRAND.color+';border-bottom:1px solid #eee;padding-bottom:4px;margin:22px 0 8px">'+n+'. '+esc(t)+'</h2>'; }
+ function exec(html){ return '<table width="100%" style="border-collapse:collapse;margin:10px 0 6px"><tr><td style="background:#f6f6f9;border-left:4px solid '+BRAND.color+';padding:12px 14px;font-family:Georgia;font-size:11pt;color:#222">'+html+'</td></tr></table>'; }
+ function tplAppendix(){ var h='<h2 style="font-family:Arial;font-size:14pt;color:'+BRAND.color+';border-bottom:1px solid #eee;padding-bottom:4px;margin:22px 0 8px">Appendix — Working templates &amp; sign-offs</h2>';
+   TDEFS.forEach(function(t){ var v=getTpl(t.id);
+     h+='<h3 style="font-family:Arial;font-size:12pt;color:#222;margin:14px 0 2px">'+esc(t.title)+'</h3>';
+     t.fields.forEach(function(f,i){ h+=fld(f.l, v["f"+i]); });
+     if(t.signoff){ h+=fld("Signed off", (v.so_n||"—")+"     ·     "+(v.so_r||"")+"     ·     "+(v.so_d||"")); }
+   }); return h; }
+ 
+ var DOC_TITLE="Delivery Enablement — Diagnostic Report";
+ function buildBody(){
+  var r=S.result;
+  var b=r?exec('<b>Recommendation:</b> '+(esc(r.archetype)||'\u2014')+(r.domain?(' \u00b7 '+esc(r.domain)):'')+'<br><b>Lead with:</b> '+((r.primary||[]).map(esc).join(', ')||'\u2014')):exec('<b>Recommendation:</b> \u2014 diagnostic not yet run \u2014');
+  b+=sec(1,'The problem as framed')+fld('Problem (client words)',S.problem)
+    +fld('Engagement context',['Stage: '+(S.stage||'\u2014'),'Relationship: '+(S.relationship||'\u2014'),'"Done": '+(S.done||'\u2014'),'Stakes: '+(S.stakes||'\u2014'),'Stakeholders: '+(S.stakeholders||'\u2014'),'Evidence: '+(S.evidence||'\u2014'),'Sector: '+(S.sector||'\u2014')].join('\n'));
+  b+=sec(2,'AI diagnostic');
+  if(r){ b+=fld('Domain (Cynefin)',(r.domain||'')+(r.domainWhy?(' \u2014 '+r.domainWhy):''))+fld('Archetype',r.archetype)
+    +fld('Lead methods',(r.primary||[]).join(', '))+fld('Supporting methods',(r.supporting||[]).join(', '))
+    +fld('Where to start',r.startAt)+fld('Gate intensity',(r.gate||'')+(r.gateWhy?(' \u2014 '+r.gateWhy):''))+fld('Human-landing note',r.humanLanding); }
+  else { b+=fld('AI diagnostic',''); }
+  return b;
+ }
+
+ function makeDoc(title,client,body){
+   var date=new Date().toLocaleDateString("en-GB",{day:"numeric",month:"long",year:"numeric"});
+   var cover='<table width="100%" style="border-collapse:collapse"><tr><td style="background:'+BRAND.color+';padding:18px 20px"><span style="font-family:Arial;font-weight:bold;font-size:16pt;color:#fff">'+esc(BRAND.name)+'</span><span style="font-family:Arial;font-size:9pt;color:#fff"> · '+esc(BRAND.product)+'</span></td></tr></table>';
+   var head='<h1 style="font-family:Arial;font-size:22pt;color:'+BRAND.color+';margin:22px 0 2px">'+esc(title)+'</h1><p style="font-family:Arial;font-size:11pt;color:#444;margin:0 0 2px">Prepared for: <b>'+(esc(client)||"—")+'</b></p><p style="font-family:Arial;font-size:10pt;color:#888;margin:0 0 4px">'+date+'</p><hr style="border:none;border-top:2px solid '+BRAND.color+'">';
+   var gov=exec('<b>Governance:</b> this analysis was AI-assisted and reviewed by a named consultant. Human judgement and sign-off were retained at every gate, in line with the platform augmentation principle.');
+   var foot='<hr style="border:none;border-top:1px solid #ddd;margin-top:26px"><p style="font-family:Arial;font-size:8pt;color:#999">'+esc(BRAND.name)+' · Engagement report · AI-assisted analysis with human judgement retained at every gate.</p>';
+   return '<html xmlns:o="urn:schemas-microsoft-com:office:office" xmlns:w="urn:schemas-microsoft-com:office:word" xmlns="http://www.w3.org/TR/REC-html40"><head><meta charset="utf-8"><title>'+esc(title)+'</title></head><body style="font-family:Georgia;max-width:760px;margin:0 auto;padding:0 10px">'+cover+head+gov+body+tplAppendix()+foot+'</body></html>';
+ }
+ document.getElementById("repOpen").onclick=function(){
+   var client=(typeof S!=="undefined"&&S&&S.client)?S.client:(window.prompt("Client name for this report (optional):","")||"");
+   var html=makeDoc(DOC_TITLE, client, buildBody());
+   var blob=new Blob(["\ufeff",html],{type:"application/msword"});
+   var a=document.createElement("a"); a.href=URL.createObjectURL(blob);
+   a.download=DOC_TITLE.replace(/[^a-z0-9]+/gi,"-").toLowerCase()+(client?("-"+client.replace(/[^a-z0-9]+/gi,"-").toLowerCase()):"")+".doc"; a.click();
+ };
+})();
+</script></body>
 </html>

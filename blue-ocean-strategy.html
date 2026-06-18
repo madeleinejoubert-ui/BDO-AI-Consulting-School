@@ -782,5 +782,64 @@ render();
  document.getElementById("tplOpen").onclick=function(){ list(); modal.classList.add("show"); };
 })();
 </script>
-</body>
+
+<style>
+ .rep-fab{position:fixed;left:20px;bottom:108px;z-index:90;background:#1d1d1b;color:#fff;border:none;border-radius:11px;
+   font-family:var(--display,sans-serif);font-weight:700;font-size:13px;padding:11px 16px;cursor:pointer;box-shadow:0 10px 24px -10px rgba(0,0,0,.55)}
+ .rep-fab:hover{filter:brightness(1.25)}
+</style>
+<button class="rep-fab" id="repOpen">📊 Generate report</button>
+<script>
+(function(){
+ var BRAND={"name": "BDO", "product": "AI-Augmented Consulting", "color": "#E81A3B"}, TDEFS=[{"id": "bo1", "title": "As-Is Canvas — factor review", "signoff": false, "fields": [{"l": "Industry & key players"}, {"l": "Factors buyers actually pay for"}, {"l": "Where the rivals' curves converge"}, {"l": "Where we genuinely differ today"}]}, {"id": "bo2", "title": "Path & noncustomer decision", "signoff": false, "fields": [{"l": "Six-paths openings considered"}, {"l": "The path we're betting on, and why"}, {"l": "Noncustomers we'll target"}, {"l": "Key risks in this bet"}]}, {"id": "bo3", "title": "ERRC sign-off", "signoff": true, "fields": [{"l": "Eliminate"}, {"l": "Reduce"}, {"l": "Raise"}, {"l": "Create"}, {"l": "What we are consciously choosing to STOP doing"}]}, {"id": "bo4", "title": "Value-curve test", "signoff": false, "fields": [{"l": "New value curve, in a sentence"}, {"l": "Focus — where are the clear peaks?"}, {"l": "Divergence — how does it differ from rivals?"}, {"l": "Tagline (the billboard line)"}, {"l": "Verdict — does it break away?"}]}, {"id": "bo5", "title": "Business case & change-landing sign-off", "signoff": true, "fields": [{"l": "Strategic price & the corridor of the mass"}, {"l": "Target cost to hit that price"}, {"l": "Adoption hurdles & how we clear them"}, {"l": "How we bring our people through the change"}]}];
+ function esc(s){ s=(s==null?'':''+s); return s.replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;'); }
+ function getTpl(id){ try{return JSON.parse(localStorage.getItem("tpl:"+id))||{};}catch(e){return {};} }
+ function fld(l,v){ var val=esc(v).replace(/\n/g,'<br>'); return '<p style="font-family:Arial;font-weight:bold;font-size:10.5pt;color:#333;margin:10px 0 2px">'+esc(l)+'</p><p style="font-family:Georgia;font-size:11pt;color:#111;margin:0;white-space:pre-wrap">'+(val||'<span style="color:#bbb">— not yet completed —</span>')+'</p>'; }
+ function sec(n,t){ return '<h2 style="font-family:Arial;font-size:14pt;color:'+BRAND.color+';border-bottom:1px solid #eee;padding-bottom:4px;margin:22px 0 8px">'+n+'. '+esc(t)+'</h2>'; }
+ function exec(html){ return '<table width="100%" style="border-collapse:collapse;margin:10px 0 6px"><tr><td style="background:#f6f6f9;border-left:4px solid '+BRAND.color+';padding:12px 14px;font-family:Georgia;font-size:11pt;color:#222">'+html+'</td></tr></table>'; }
+ function tplAppendix(){ var h='<h2 style="font-family:Arial;font-size:14pt;color:'+BRAND.color+';border-bottom:1px solid #eee;padding-bottom:4px;margin:22px 0 8px">Appendix — Working templates &amp; sign-offs</h2>';
+   TDEFS.forEach(function(t){ var v=getTpl(t.id);
+     h+='<h3 style="font-family:Arial;font-size:12pt;color:#222;margin:14px 0 2px">'+esc(t.title)+'</h3>';
+     t.fields.forEach(function(f,i){ h+=fld(f.l, v["f"+i]); });
+     if(t.signoff){ h+=fld("Signed off", (v.so_n||"—")+"     ·     "+(v.so_r||"")+"     ·     "+(v.so_d||"")); }
+   }); return h; }
+ 
+ var DOC_TITLE="Blue Ocean — Strategy Engagement Report";
+ function buildBody(){
+  var tb=S.tobe||{}, rc=S.reconstruct||{}, er=S.errc||{}, sq=S.seq||{}, eg=S.errcGate||{}, ser=S.series||[], fac=S.factors||[], nc=S.newCurve;
+  var b=exec('<b>Strategic move:</b> '+(esc(tb.tagline)||'\u2014')+'<br><b>How it breaks away:</b> '+(esc(tb.divergence)||'\u2014'));
+  b+=sec(1,'The as-is market');
+  b+='<table width="100%" style="border-collapse:collapse;margin:6px 0;font-family:Arial;font-size:10pt"><tr><th style="text-align:left;border-bottom:2px solid #ccc;padding:5px">Factor</th>'
+    + ser.map(function(se){return '<th style="border-bottom:2px solid #ccc;padding:5px">'+esc(se.name)+'</th>';}).join('')
+    + (nc?'<th style="border-bottom:2px solid #ccc;padding:5px;color:'+BRAND.color+'">'+esc(nc.name)+'</th>':'')+'</tr>';
+  fac.forEach(function(f,i){ b+='<tr><td style="padding:5px;border-bottom:1px solid #eee">'+esc(f)+'</td>'
+    + ser.map(function(se){var v=(se.levels||[])[i];return '<td align="center" style="padding:5px;border-bottom:1px solid #eee">'+(v!=null?v:'\u2014')+'</td>';}).join('')
+    + (nc?'<td align="center" style="padding:5px;border-bottom:1px solid #eee;font-weight:bold;color:'+BRAND.color+'">'+(((nc.levels||[])[i])!=null?nc.levels[i]:'\u2014')+'</td>':'')+'</tr>'; });
+  b+='</table>';
+  b+=sec(2,'Reconstructing the boundaries')+fld('Path / market boundary chosen',rc.paths)+fld('Noncustomers targeted',rc.noncustomers);
+  b+=sec(3,'The four actions (ERRC)')+fld('Eliminate',(er.eliminate||[]).join('\n'))+fld('Reduce',(er.reduce||[]).join('\n'))+fld('Raise',(er.raise||[]).join('\n'))+fld('Create',(er.create||[]).join('\n'));
+  if(eg.on) b+=fld('ERRC signed off by',eg.who);
+  b+=sec(4,'The new value curve')+fld('Focus',tb.focus)+fld('Divergence',tb.divergence)+fld('Tagline',tb.tagline);
+  b+=sec(5,'Making it real')+fld('Buyer utility',sq.utility)+fld('Price corridor',sq.price)+fld('Target costing',sq.costing)+fld('Adoption hurdles',sq.hurdles);
+  if(sq.gateOn) b+=fld('Business case signed off by',sq.who);
+  return b;
+ }
+
+ function makeDoc(title,client,body){
+   var date=new Date().toLocaleDateString("en-GB",{day:"numeric",month:"long",year:"numeric"});
+   var cover='<table width="100%" style="border-collapse:collapse"><tr><td style="background:'+BRAND.color+';padding:18px 20px"><span style="font-family:Arial;font-weight:bold;font-size:16pt;color:#fff">'+esc(BRAND.name)+'</span><span style="font-family:Arial;font-size:9pt;color:#fff"> · '+esc(BRAND.product)+'</span></td></tr></table>';
+   var head='<h1 style="font-family:Arial;font-size:22pt;color:'+BRAND.color+';margin:22px 0 2px">'+esc(title)+'</h1><p style="font-family:Arial;font-size:11pt;color:#444;margin:0 0 2px">Prepared for: <b>'+(esc(client)||"—")+'</b></p><p style="font-family:Arial;font-size:10pt;color:#888;margin:0 0 4px">'+date+'</p><hr style="border:none;border-top:2px solid '+BRAND.color+'">';
+   var gov=exec('<b>Governance:</b> this analysis was AI-assisted and reviewed by a named consultant. Human judgement and sign-off were retained at every gate, in line with the platform augmentation principle.');
+   var foot='<hr style="border:none;border-top:1px solid #ddd;margin-top:26px"><p style="font-family:Arial;font-size:8pt;color:#999">'+esc(BRAND.name)+' · Engagement report · AI-assisted analysis with human judgement retained at every gate.</p>';
+   return '<html xmlns:o="urn:schemas-microsoft-com:office:office" xmlns:w="urn:schemas-microsoft-com:office:word" xmlns="http://www.w3.org/TR/REC-html40"><head><meta charset="utf-8"><title>'+esc(title)+'</title></head><body style="font-family:Georgia;max-width:760px;margin:0 auto;padding:0 10px">'+cover+head+gov+body+tplAppendix()+foot+'</body></html>';
+ }
+ document.getElementById("repOpen").onclick=function(){
+   var client=(typeof S!=="undefined"&&S&&S.client)?S.client:(window.prompt("Client name for this report (optional):","")||"");
+   var html=makeDoc(DOC_TITLE, client, buildBody());
+   var blob=new Blob(["\ufeff",html],{type:"application/msword"});
+   var a=document.createElement("a"); a.href=URL.createObjectURL(blob);
+   a.download=DOC_TITLE.replace(/[^a-z0-9]+/gi,"-").toLowerCase()+(client?("-"+client.replace(/[^a-z0-9]+/gi,"-").toLowerCase()):"")+".doc"; a.click();
+ };
+})();
+</script></body>
 </html>
