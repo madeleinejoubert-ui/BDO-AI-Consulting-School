@@ -136,6 +136,10 @@
 
   @media (max-width:820px){ .errc,.g2,.testgrid{grid-template-columns:1fr} .slrow{grid-template-columns:120px 1fr 24px} .step .lbltext{display:none}.step{font-size:0} .augpill{flex-basis:100%} }
   @media (prefers-reduced-motion:reduce){*{animation-duration:.001ms!important;transition-duration:.001ms!important}}
+  /* explain-on-hover tooltips */
+  .ttip{display:inline-flex;align-items:center;justify-content:center;width:15px;height:15px;border-radius:50%;background:var(--ai);color:#fff;font-size:10px;font-weight:700;font-style:normal;cursor:help;margin-left:6px;position:relative;vertical-align:middle;font-family:var(--display);letter-spacing:0;text-transform:none}
+  .ttip::after{content:attr(data-tip);position:absolute;bottom:135%;left:50%;transform:translateX(-50%);background:#11131c;color:#fff;font-family:var(--body);font-weight:400;font-size:12.5px;line-height:1.45;letter-spacing:0;text-transform:none;padding:10px 12px;border-radius:9px;width:250px;max-width:72vw;text-align:left;opacity:0;visibility:hidden;pointer-events:none;transition:opacity .15s;z-index:80;box-shadow:0 10px 28px -8px rgba(0,0,0,.55)}
+  .ttip:hover::after,.ttip.show::after{opacity:1;visibility:visible}
 </style>
 </head>
 <body>
@@ -146,7 +150,7 @@
     <div class="tools">
       <button class="btn" id="saveBtn">⭳ Save</button>
       <button class="btn" id="loadBtn">⭱ Load</button>
-      <button class="btn" id="pngBtn">🖼 Export canvas</button>
+      <input type="text" id="exp_client" placeholder="Client name (for export)" style="border:1px solid var(--line-2);border-radius:8px;padding:6px 9px;font-size:12px;font-family:var(--mono);width:148px"><button class="btn" id="pngBtn">🖼 Export canvas</button>
       <button class="btn ghost" id="resetBtn">Reset</button>
       <input type="file" id="fileIn" accept="application/json" hidden>
     </div>
@@ -198,6 +202,23 @@
 
 <script>
 "use strict";
+var GLOSSARY={
+ "ERRC":"Eliminate, Reduce, Raise, Create — the four moves that reshape your value curve: drop or dial down costly factors the industry takes for granted, and lift or invent the ones that matter.",
+ "Six Paths":"Six ways to look beyond your industry for new demand: across alternative industries, strategic groups, the buyer chain, complementary offerings, functional vs emotional appeal, and trends over time.",
+ "Focus":"A strong strategy concentrates on a few factors rather than spreading thin — the curve has clear peaks, not a flat line.",
+ "Divergence":"Does your value curve look clearly different from rivals, or does it track the herd? A blue-ocean curve stands apart.",
+ "Tagline":"A strong strategy can be captured in one compelling, honest line. If you cannot, the strategy may be muddled.",
+ "Buyer utility":"Whether the offering removes the real blocks buyers face across their whole experience — not just whether it is cheaper.",
+ "Price corridor":"The price band that captures the largest group of target buyers — set to win volume, not to skim a niche.",
+ "Target costing":"Work back from the strategic price to the cost you must hit — price first, then engineer the cost, not the reverse.",
+ "Adoption hurdles":"The resistance a new strategy meets from employees, partners and the wider public, that must be addressed before launch."
+};
+function tip(k){ var d=GLOSSARY[k]||""; return '<span class="ttip" data-tip="'+d.replace(/"/g,"&quot;")+'" role="button" tabindex="0" aria-label="'+k+' explained">i</span>'; }
+document.addEventListener("click",function(e){ var t=e.target.closest(".ttip"); document.querySelectorAll(".ttip.show").forEach(function(x){ if(x!==t) x.classList.remove("show"); }); if(t){ e.stopPropagation(); t.classList.toggle("show"); } });
+
+function copyText(t){ if(navigator.clipboard && window.isSecureContext){ navigator.clipboard.writeText(t).then(function(){toast("Prompt copied");},function(){fallbackCopy(t);}); } else { fallbackCopy(t); } }
+function fallbackCopy(t){ try{ var ta=document.createElement("textarea"); ta.value=t; ta.setAttribute("readonly",""); ta.style.position="fixed"; ta.style.left="-9999px"; document.body.appendChild(ta); ta.select(); ta.setSelectionRange(0,t.length); var ok=document.execCommand("copy"); document.body.removeChild(ta); toast(ok?"Prompt copied":"Press Ctrl+C / Cmd+C to copy"); } catch(e){ toast("Select the text and copy manually"); } }
+
 function looseJSON(s){
   if(s==null) throw new Error("empty");
   var t=String(s).replace(/```json/gi,"").replace(/```/g,"");
@@ -223,7 +244,7 @@ var BLANK={
   errcGate:{on:false, who:""},
   tobe:{focus:"", divergence:"", tagline:""},
   seq:{utility:"", price:"", costing:"", hurdles:"", index:"", gateOn:false, who:""},
-  active:0
+  active:0, client:""
 };
 var S=load()||JSON.parse(JSON.stringify(BLANK));
 var cur=0;
@@ -251,7 +272,7 @@ var fbState={wantJson:false,onResult:null};
 function openFallback(p,j,f){ fbState={wantJson:j,onResult:f}; document.getElementById("mPrompt").textContent=p+(j?"\n\n(Return only the JSON described above.)":""); document.getElementById("mResult").value=""; document.getElementById("modal").classList.add("show"); }
 function closeFb(){ document.getElementById("modal").classList.remove("show"); document.getElementById("mResult").value=""; }
 document.getElementById("mClose").onclick=closeFb;
-document.getElementById("mCopy").onclick=function(){ navigator.clipboard.writeText(document.getElementById("mPrompt").textContent).then(function(){ toast("Prompt copied"); }); };
+document.getElementById("mCopy").onclick=function(){ copyText(document.getElementById("mPrompt").textContent); };
 document.getElementById("mApply").onclick=function(){ var raw=document.getElementById("mResult").value.trim(); if(!raw){ toast("Paste the result first"); return; }
   try{ var out; if(fbState.wantJson){ var clean=raw.replace(/```json/gi,"").replace(/```/g,"").trim(); var m=clean.match(/[\[{][\s\S]*[\]}]/); out=looseJSON(m?m[0]:clean); } else out=raw;
     fbState.onResult(out); persist(); render(); closeFb(); toast("Applied — now make it yours");
@@ -373,7 +394,7 @@ function stageReconstruct(){
   wrap.innerHTML=head("Stage 2 / 5","Reconstruct the boundaries",
     "New market space hides at the edges of how your industry defines itself. Scan the Six Paths, and look hard at the people who are NOT your customers — they often outnumber those who are.")
     +augband("Scans the Six Paths and profiles the three tiers of noncustomers you're ignoring.","Chooses which path holds the real opening — pattern-spotting is cheap; conviction is yours.","");
-  wrap.appendChild(el('<div class="panel aizone"><p class="lbl"><span class="tagmini ai">AI</span> Six Paths scan</p>'
+  wrap.appendChild(el('<div class="panel aizone"><p class="lbl"><span class="tagmini ai">AI</span> Six Paths scan'+tip("Six Paths")+'</p>'
     +'<p class="hint">Look across: alternative industries · strategic groups · the buyer chain · complementary offerings · functional vs emotional appeal · trends over time.</p>'
     +'<button class="aibtn" data-label="Scan the six paths" id="r_ai">✦ Scan the six paths &amp; noncustomers</button>'
     +'<textarea id="r_paths" style="margin-top:12px;min-height:150px" placeholder="Openings across the six paths…"></textarea></div>'));
@@ -392,7 +413,7 @@ function stageReconstruct(){
 /* ---------- STAGE 3: ERRC ---------- */
 function stageERRC(){
   var E=S.errc, G=S.errcGate; var wrap=el('<section class="stage"></section>');
-  wrap.innerHTML=head("Stage 3 / 5","The Four Actions — ERRC",
+  wrap.innerHTML=head("Stage 3 / 5","The Four Actions — ERRC"+tip("ERRC"),
     "This is where value innovation happens: drop costly factors the industry takes for granted, and create new ones it never offered. Tap factors into Eliminate, Reduce or Raise; type brand-new ones into Create.")
     +augband("Suggests candidates for each of the four actions from the canvas and the six-paths scan.","Owns the calls — especially what to eliminate, the bravest and least reversible move.","A named human signs off the ERRC grid before it reshapes the strategy.");
   wrap.appendChild(el('<div class="row" style="margin:0 0 14px"><button class="aibtn" data-label="Suggest ERRC" id="e_ai">✦ Suggest the four actions</button></div>'));
@@ -451,9 +472,9 @@ function stageNew(){
   wrap.appendChild(el('<div class="panel aizone"><p class="lbl"><span class="tagmini ai">AI</span> Test the three hallmarks</p>'
     +'<button class="aibtn" data-label="Test the curve" id="t_ai">✦ Test focus, divergence &amp; tagline</button>'
     +'<div class="testgrid" style="margin-top:12px">'
-    +'<div><p class="lbl">Focus</p><textarea class="sm" id="t_focus"></textarea></div>'
-    +'<div><p class="lbl">Divergence</p><textarea class="sm" id="t_div"></textarea></div>'
-    +'<div><p class="lbl">Tagline</p><textarea class="sm" id="t_tag" placeholder="The billboard line…"></textarea></div>'
+    +'<div><p class="lbl">Focus'+tip("Focus")+'</p><textarea class="sm" id="t_focus"></textarea></div>'
+    +'<div><p class="lbl">Divergence'+tip("Divergence")+'</p><textarea class="sm" id="t_div"></textarea></div>'
+    +'<div><p class="lbl">Tagline'+tip("Tagline")+'</p><textarea class="sm" id="t_tag" placeholder="The billboard line…"></textarea></div>'
     +'</div></div>'));
   setTimeout(function(){
     drawNew(); renderSliders2(); bind("t_focus",T,"focus"); bind("t_div",T,"divergence"); bind("t_tag",T,"tagline");
@@ -502,10 +523,10 @@ function stageReal(){
   wrap.appendChild(el('<div class="panel aizone"><p class="lbl"><span class="tagmini ai">AI</span> Model the commercials</p>'
     +'<button class="aibtn" data-label="Model price & hurdles" id="q_ai">✦ Model price corridor &amp; adoption hurdles</button>'
     +'<div class="g2" style="margin-top:12px">'
-    +'<div><p class="lbl">Buyer utility</p><textarea class="sm" id="q_util"></textarea></div>'
-    +'<div><p class="lbl">Price corridor of the mass</p><textarea class="sm" id="q_price"></textarea></div>'
-    +'<div><p class="lbl">Target costing</p><textarea class="sm" id="q_cost"></textarea></div>'
-    +'<div><p class="lbl">Adoption hurdles</p><textarea class="sm" id="q_hurdles"></textarea></div>'
+    +'<div><p class="lbl">Buyer utility'+tip("Buyer utility")+'</p><textarea class="sm" id="q_util"></textarea></div>'
+    +'<div><p class="lbl">Price corridor of the mass'+tip("Price corridor")+'</p><textarea class="sm" id="q_price"></textarea></div>'
+    +'<div><p class="lbl">Target costing'+tip("Target costing")+'</p><textarea class="sm" id="q_cost"></textarea></div>'
+    +'<div><p class="lbl">Adoption hurdles'+tip("Adoption hurdles")+'</p><textarea class="sm" id="q_hurdles"></textarea></div>'
     +'</div></div>'));
   wrap.appendChild(el('<div class="panel huzone"><p class="lbl"><span class="tagmini hu">YOU</span> The part no AI lands</p>'
     +'<p class="hint">A blue-ocean move often cannibalises today\'s business. Winning over the people who built the old model — and protecting them through the shift — is a human and political task, not an analytical one. Note how you\'ll bring employees and partners with you.</p>'
@@ -529,20 +550,40 @@ function stageReal(){
 }
 
 /* ===== export PNG ===== */
+var BDO_LOGO=`<svg viewBox="0 0 1667 1080" xmlns="http://www.w3.org/2000/svg" fill="none" role="img" aria-label="BDO">'
+      +'<path d="M540.76 509.51H573.606C627.585 509.51 655.107 521.293 655.107 552.916C655.107 580.911 633.043 592.761 598.399 592.761H545.818L485.716 634.869H598C665.224 634.869 710.517 610.669 710.517 554.614C710.517 505.748 670.449 486.542 634.707 486.542C659.4 486.542 688.619 464.406 688.619 426.825C688.619 389.243 654.275 362.347 615.139 362.347H500.526H475.666L485.716 384.683V615.296L540.727 576.75V509.543L540.76 509.51ZM540.76 404.456H598.433C614.273 404.456 634.308 408.25 634.308 435.113C634.308 461.976 605.654 472.96 584.389 472.96H540.76V404.456Z" fill="#28348A"/>'
+      +'<path d="M801.069 404.456H838.542C854.016 404.456 932.855 408.383 932.855 498.625C932.855 601.615 838.542 592.761 838.542 592.761H806.194L746.059 634.869H854.016C921.24 634.869 990.195 593.493 990.195 498.592C990.195 414.442 929.993 362.314 854.016 362.314H736.009L746.059 384.65V615.263L801.069 576.75V404.456Z" fill="#28348A"/>'
+      +'<path d="M1015.62 498.592C1015.62 607.34 1103.48 637.865 1160.42 637.865C1217.36 637.865 1305.21 607.307 1305.21 498.592C1305.21 389.876 1217.32 359.318 1160.38 359.318C1103.44 359.318 1015.59 389.876 1015.59 498.592H1015.62ZM1072.93 498.592C1072.93 421.532 1126.01 399.862 1160.42 399.862C1194.83 399.862 1247.87 421.499 1247.87 498.592C1247.87 575.684 1194.79 597.321 1160.42 597.321C1126.04 597.321 1072.93 575.684 1072.93 498.592Z" fill="#28348A"/>'
+      +'<path d="M361.818 362.347V702.076L415.564 664.428V362.347H361.818Z" fill="#E81A3B"/>'
+      +'<path d="M425.614 677.01L361.818 721.682H1302.19V677.01H425.614Z" fill="#E81A3B"/></svg></svg>`;
+function loadImg(src){ return new Promise(function(res,rej){ var im=new Image(); im.onload=function(){res(im);}; im.onerror=rej; im.src=src; }); }
 function exportPNG(){
   var svg=document.querySelector('#chartHost2 svg') || document.querySelector('#chartHost svg');
   var _temp=null;
   if(!svg){ _temp=document.createElement('div'); _temp.style.cssText='position:fixed;left:-99999px;top:0'; _temp.innerHTML=chartSVG(newSeriesList()); document.body.appendChild(_temp); svg=_temp.querySelector('svg'); }
   if(!svg){ toast("Build a value curve first"); if(_temp){_temp.remove();} return; }
+  var vb=svg.viewBox.baseVal, W=(vb&&vb.width)||860, H=(vb&&vb.height)||460;
   var xml=new XMLSerializer().serializeToString(svg);
-  var url='data:image/svg+xml;base64,'+btoa(unescape(encodeURIComponent(xml)));
-  var img=new Image();
-  img.onload=function(){ var scale=2, vb=svg.viewBox.baseVal, W=(vb&&vb.width)||860, H=(vb&&vb.height)||460;
-    var c=document.createElement('canvas'); c.width=W*scale; c.height=H*scale; var ctx=c.getContext('2d');
-    ctx.fillStyle='#fff'; ctx.fillRect(0,0,c.width,c.height); ctx.drawImage(img,0,0,c.width,c.height);
-    var a=document.createElement('a'); a.download='strategy-canvas.png'; a.href=c.toDataURL('image/png'); a.click(); toast("Canvas saved as image"); if(_temp){_temp.remove();} };
-  img.onerror=function(){ toast("Export failed — try a screenshot"); if(_temp){_temp.remove();} };
-  img.src=url;
+  var chartUrl='data:image/svg+xml;base64,'+btoa(unescape(encodeURIComponent(xml)));
+  var logoUrl='data:image/svg+xml;base64,'+btoa(unescape(encodeURIComponent(BDO_LOGO)));
+  var client=(document.getElementById('exp_client')&&document.getElementById('exp_client').value.trim())||(S.client||'');
+  Promise.all([loadImg(chartUrl), loadImg(logoUrl)]).then(function(imgs){
+    var chartImg=imgs[0], logoImg=imgs[1], scale=2, band=78, foot=34;
+    var c=document.createElement('canvas'); c.width=W*scale; c.height=(H+band+foot)*scale;
+    var x=c.getContext('2d'); x.scale(scale,scale);
+    x.fillStyle='#ffffff'; x.fillRect(0,0,W,H+band+foot);
+    var lh=42, lw=lh*1667/1080; x.drawImage(logoImg, 30, (band-lh)/2, lw, lh);
+    x.fillStyle='#1d1d1b'; x.textAlign='left'; x.font='700 19px Montserrat, Arial, sans-serif';
+    x.fillText('Blue Ocean — Strategy Canvas', 30+lw+26, band/2+7);
+    if(client){ x.textAlign='right'; x.fillStyle='#E81A3B'; x.font='700 16px Montserrat, Arial, sans-serif'; x.fillText('Prepared for '+client, W-30, band/2+7); }
+    x.strokeStyle='#E81A3B'; x.lineWidth=2.5; x.beginPath(); x.moveTo(0,band); x.lineTo(W,band); x.stroke();
+    x.drawImage(chartImg, 0, band, W, H);
+    x.fillStyle='#6c6c75'; x.textAlign='left'; x.font='400 11px Montserrat, Arial, sans-serif';
+    x.fillText('BDO · AI-Augmented Consulting', 30, H+band+21);
+    x.textAlign='right'; x.fillText(new Date().toLocaleDateString('en-GB'), W-30, H+band+21);
+    var a=document.createElement('a'); a.download='strategy-canvas'+(client?'-'+client.replace(/[^a-z0-9]+/gi,'-').toLowerCase():'')+'.png'; a.href=c.toDataURL('image/png'); a.click();
+    toast('Canvas exported'+(client?' for '+client:'')); if(_temp){_temp.remove();}
+  }).catch(function(){ toast('Export failed — try a screenshot'); if(_temp){_temp.remove();} });
 }
 
 /* ===== toolbar ===== */
@@ -550,6 +591,7 @@ document.getElementById("saveBtn").onclick=function(){ var b=new Blob([JSON.stri
 document.getElementById("loadBtn").onclick=function(){ document.getElementById("fileIn").click(); };
 document.getElementById("fileIn").onchange=function(e){ var f=e.target.files[0]; if(!f)return; var r=new FileReader(); r.onload=function(){ try{ S=JSON.parse(r.result); persist(); cur=0; render(); toast("Loaded"); }catch(err){ toast("Couldn't read that file"); } }; r.readAsText(f); };
 document.getElementById("pngBtn").onclick=exportPNG;
+var _ec=document.getElementById("exp_client"); if(_ec){ _ec.value=S.client||""; _ec.addEventListener("input",function(){ S.client=_ec.value; persist(); }); }
 document.getElementById("resetBtn").onclick=function(){ if(confirm("Clear everything and start fresh?")){ S=JSON.parse(JSON.stringify(BLANK)); persist(); cur=0; render(); } };
 document.querySelectorAll(".step").forEach(function(s){ s.onclick=function(){ cur=+s.dataset.i; render(); }; });
 window.addEventListener("resize",function(){ var t=document.getElementById("steptrack"),f=document.getElementById("stepfill"); if(t&&f){ var w=t.clientWidth-10,seg=w/5; f.style.left=(5+cur*seg)+"px"; f.style.width=seg+"px"; } });
