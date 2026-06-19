@@ -498,7 +498,7 @@ document.getElementById("saveBtn").onclick=function(){ var b=new Blob([JSON.stri
 document.getElementById("loadBtn").onclick=function(){ document.getElementById("fileIn").click(); };
 document.getElementById("fileIn").onchange=function(e){ var f=e.target.files[0]; if(!f)return; var r=new FileReader(); r.onload=function(){ try{ S=JSON.parse(r.result); persist(); cur=0; render(); toast("Loaded"); }catch(err){ toast("Couldn't read that file"); } }; r.readAsText(f); };
 document.getElementById("printBtn").onclick=function(){ window.print(); };
-document.getElementById("resetBtn").onclick=function(){ if(confirm("Clear the whole toolset and start fresh?")){ S=JSON.parse(JSON.stringify(BLANK)); persist(); cur=0; maxReached=0; render(); } };
+document.getElementById("resetBtn").onclick=function(){ if(confirm("Clear the whole toolset and start fresh?")){ S=JSON.parse(JSON.stringify(BLANK)); persist(); Object.keys(localStorage).forEach(function(k){ if(k.indexOf("tpl:jt")===0){localStorage.removeItem(k);} }); cur=0; maxReached=0; render(); } };
 document.querySelectorAll(".step").forEach(function(s){ s.onclick=function(){ cur=+s.dataset.i; maxReached=Math.max(maxReached,cur); render(); }; });
 window.addEventListener("resize",function(){ var t=document.getElementById("steptrack"),f=document.getElementById("stepfill"); if(t&&f){ var w=t.clientWidth-10,seg=w/4; f.style.left=(5+cur*seg)+"px"; f.style.width=seg+"px"; } });
 render();
@@ -622,6 +622,7 @@ render();
  .tpl-row{display:flex;gap:10px;justify-content:space-between;margin-top:18px;flex-wrap:wrap}
  .tpl-btn{font-family:var(--display,sans-serif);font-weight:700;font-size:13px;border-radius:9px;padding:10px 16px;cursor:pointer;border:1px solid var(--line-2,#d4d4dc);background:#fff;color:var(--ink,#1d1d1b)}
  .tpl-btn.go{background:var(--pop,#E81A3B);border-color:var(--pop,#E81A3B);color:#fff}
+ .tpl-btn.save{background:#1f9d57;border-color:#1f9d57;color:#fff}
  @media (max-width:600px){.tpl-3{grid-template-columns:1fr}}
 </style>
 <button class="tpl-fab" id="tplOpen">📄 Working templates</button>
@@ -635,7 +636,7 @@ render();
  function loadV(id){ try{return JSON.parse(localStorage.getItem(key(id)))||{};}catch(e){return {};} }
  function saveV(id,v){ try{localStorage.setItem(key(id),JSON.stringify(v));}catch(e){} }
  function list(){
-  var h='<h3>Working templates</h3><div class="sub">Fill on screen, then export to Word. Your work autosaves.</div><div class="tpl-list">';
+  var h='<h3>Working templates</h3><div class="sub">Fill on screen and <b>Save</b>. Your work is kept on this device until you Reset — move on and come back any time.</div><div class="tpl-list">';
   TPLS.forEach(function(t){ h+='<a data-id="'+t.id+'"><b>'+esc(t.title)+(t.signoff?'<span class="gate">Sign-off</span>':'')+'</b><span>'+esc(t.intro)+'</span></a>'; });
   h+='</div><div class="tpl-row"><button class="tpl-btn" id="tpl_x">Close</button></div>';
   body.innerHTML=h;
@@ -652,12 +653,14 @@ render();
    +'<div><label>Name</label><input type="text" id="so_n" value="'+esc(v.so_n||"")+'"></div>'
    +'<div><label>Role</label><input type="text" id="so_r" value="'+esc(v.so_r||"")+'"></div>'
    +'<div><label>Date</label><input type="text" id="so_d" value="'+esc(v.so_d||"")+'"></div></div></div>'; }
-  h+='<div class="tpl-row"><button class="tpl-btn" id="tpl_back">‹ All templates</button><div><button class="tpl-btn" id="tpl_print">Print</button> <button class="tpl-btn go" id="tpl_word">Export to Word</button></div></div>';
+  h+='<div class="tpl-row"><button class="tpl-btn" id="tpl_back">‹ All templates</button><div><button class="tpl-btn" id="tpl_print">Print</button> <button class="tpl-btn" id="tpl_close">Close</button> <button class="tpl-btn save" id="tpl_save">Save</button> <button class="tpl-btn go" id="tpl_word">Export to Word</button></div></div>';
   body.innerHTML=h;
   function collect(){ var o={}; t.fields.forEach(function(f,i){ o["f"+i]=document.getElementById("tf"+i).value; }); if(t.signoff){o.so_n=val2("so_n");o.so_r=val2("so_r");o.so_d=val2("so_d");} return o; }
   function val2(id){var e=document.getElementById(id);return e?e.value:"";}
   body.querySelectorAll("input,textarea").forEach(function(el){ el.addEventListener("input",function(){ saveV(id,collect()); }); });
   document.getElementById("tpl_back").onclick=list;
+  var _sv=document.getElementById("tpl_save"); if(_sv) _sv.onclick=function(){ saveV(id,collect()); if(typeof toast==="function"){toast("Saved \u2014 kept until you reset");} modal.classList.remove("show"); };
+  var _cl=document.getElementById("tpl_close"); if(_cl) _cl.onclick=function(){ saveV(id,collect()); modal.classList.remove("show"); };
   document.getElementById("tpl_word").onclick=function(){ exportDoc(t,collect()); };
   document.getElementById("tpl_print").onclick=function(){ var w=window.open("","_blank"); if(!w){alert("Allow pop-ups to print, or use Export to Word.");return;} w.document.write(buildHTML(t,collect())); w.document.close(); w.focus(); w.print(); };
  }
